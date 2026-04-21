@@ -1,0 +1,414 @@
+'use client'
+
+import { use, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
+import { usePokemonDetail } from '@/hooks/usePokemonDetail'
+import { usePokemonSpecies, useEvolutionChainById } from '@/hooks/usePokemonSpecies'
+import { useMoveTranslations } from '@/hooks/useMoveTranslations'
+import { getEvolutionChainIdFromUrl, getOfficialArtworkUrl, getShinyArtworkUrl } from '@/lib/api'
+import { usePokemonStore } from '@/store/pokemonStore'
+import TypeBadge from '@/components/TypeBadge'
+import StatBar from '@/components/StatBar'
+import AbilityCard from '@/components/AbilityCard'
+import EvolutionChain from '@/components/EvolutionChain'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import { TYPE_COLORS } from '@/types/pokemon'
+import { T } from '@/lib/translations'
+
+interface Props {
+  params: Promise<{ id: string }>
+}
+
+const STAT_ORDER = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
+
+export default function PokemonDetailClient({ params }: Props) {
+  const { id } = use(params)
+  const [showShiny, setShowShiny] = useState(false)
+  const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'abilities'>('stats')
+  const [moveSearch, setMoveSearch] = useState('')
+
+  const language = usePokemonStore((s) => s.language)
+  const t = T[language]
+
+  const { data: pokemon, isLoading } = usePokemonDetail(id)
+  const { data: species } = usePokemonSpecies(id)
+
+  const evoChainId = species ? getEvolutionChainIdFromUrl(species.evolution_chain.url) : undefined
+  const { data: evolutionChain } = useEvolutionChainById(evoChainId)
+
+  const levelMoves = pokemon?.moves
+    .filter((m) => m.version_group_details.some((d) => d.move_learn_method.name === 'level-up'))
+    .sort((a, b) => {
+      const al = a.version_group_details.find((d) => d.move_learn_method.name === 'level-up')?.level_learned_at ?? 0
+      const bl = b.version_group_details.find((d) => d.move_learn_method.name === 'level-up')?.level_learned_at ?? 0
+      return al - bl
+    }) ?? []
+
+  const filteredMoves = pokemon?.moves
+    .filter((m) => m.move.name.includes(moveSearch.toLowerCase()))
+    .slice(0, 80) ?? []
+
+  const moveSlugsToTranslate = moveSearch
+    ? filteredMoves.map((m) => m.move.name)
+    : levelMoves.map((m) => m.move.name)
+
+  const moveNames = useMoveTranslations(moveSlugsToTranslate, language)
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size={80} text={t.loadingPokemon} />
+      </div>
+    )
+  }
+  if (!pokemon) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <p className="text-5xl">😢</p>
+          <p className="text-white font-black text-xl">Pokémon not found</p>
+          <Link href="/" className="text-red-400 hover:text-red-300 text-sm">{t.backToPokedex}</Link>
+        </div>
+      </div>
+    )
+  }
+
+  const primaryType   = pokemon.types[0]?.type.name ?? 'normal'
+  const secondaryType = pokemon.types[1]?.type.name
+  const typeColor     = TYPE_COLORS[primaryType]  ?? '#A8A878'
+  const typeColor2    = secondaryType ? (TYPE_COLORS[secondaryType] ?? typeColor) : typeColor
+
+  const description = (
+    species?.flavor_text_entries.find((e) => e.language.name === language)?.flavor_text ??
+    species?.flavor_text_entries.find((e) => e.language.name === 'en')?.flavor_text
+  )?.replace(/\f|\n/g, ' ')
+
+  const genus = (
+    species?.genera.find((g) => g.language.name === language)?.genus ??
+    species?.genera.find((g) => g.language.name === 'en')?.genus ?? ''
+  )
+
+  const total      = pokemon.stats.reduce((s, st) => s + st.base_stat, 0)
+  const artworkUrl = showShiny ? getShinyArtworkUrl(pokemon.id) : getOfficialArtworkUrl(pokemon.id)
+
+  const tabs = [
+    { id: 'stats'     as const, icon: '📊', label: t.stats     },
+    { id: 'abilities' as const, icon: '🎯', label: t.abilities },
+    { id: 'moves'     as const, icon: '⚡', label: t.moves     },
+  ]
+
+  const genLabel = species?.generation.name
+    .replace('generation-', 'Gen ')
+    .toUpperCase()
+
+  return (
+    <div className="min-h-screen" style={{ background: '#0a0f1e' }}>
+      {/* ── Hero ── */}
+      <div className="relative overflow-hidden" style={{ minHeight: 480 }}>
+        <div className="absolute inset-0" style={{
+          background: `
+            radial-gradient(ellipse 80% 100% at 70% 0%, ${typeColor}30 0%, transparent 60%),
+            radial-gradient(ellipse 60% 80% at 30% 100%, ${typeColor2}18 0%, transparent 60%),
+            linear-gradient(180deg, #0d1526 0%, #0a0f1e 100%)
+          `,
+        }} />
+        <div className="absolute right-0 top-0 w-[600px] h-[600px] rounded-full -translate-y-1/3 translate-x-1/3 opacity-10"
+          style={{ background: `radial-gradient(circle, ${typeColor}, transparent 70%)` }} />
+        <div className="absolute right-16 top-16 opacity-5">
+          <svg viewBox="0 0 200 200" className="w-72 h-72">
+            <circle cx="100" cy="100" r="98" fill="none" stroke="white" strokeWidth="5" />
+            <path d="M 4 100 A 96 96 0 0 1 196 100" fill="white" fillOpacity="0.5" />
+            <rect x="4" y="96" width="192" height="8" fill="white" />
+            <circle cx="100" cy="100" r="24" fill="none" stroke="white" strokeWidth="5" />
+            <circle cx="100" cy="100" r="12" fill="white" />
+          </svg>
+        </div>
+
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-0">
+          {/* Back + nav */}
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/">
+              <motion.div whileHover={{ x: -4 }}
+                className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-semibold">
+                {t.backToPokedex}
+              </motion.div>
+            </Link>
+            <div className="flex gap-2">
+              {pokemon.id > 1 && (
+                <Link href={`/pokemon/${pokemon.id - 1}`}>
+                  <motion.span whileHover={{ scale: 1.05 }}
+                    className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-white text-xs transition-colors cursor-pointer"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    ← #{String(pokemon.id - 1).padStart(3, '0')}
+                  </motion.span>
+                </Link>
+              )}
+              <Link href={`/pokemon/${pokemon.id + 1}`}>
+                <motion.span whileHover={{ scale: 1.05 }}
+                  className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-white text-xs transition-colors cursor-pointer"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  #{String(pokemon.id + 1).padStart(3, '0')} →
+                </motion.span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Main hero layout */}
+          <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-end">
+            {/* Artwork */}
+            <div className="relative flex-shrink-0 self-center lg:self-end">
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-52 h-12 rounded-full blur-2xl opacity-40"
+                style={{ background: typeColor }} />
+              <motion.div animate={{ y: [0, -16, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
+                <Image
+                  src={artworkUrl}
+                  alt={`${pokemon.name.replace(/-/g, ' ')} official artwork`}
+                  width={300}
+                  height={300}
+                  className="object-contain drop-shadow-2xl"
+                  style={{ filter: `drop-shadow(0 20px 40px ${typeColor}55)` }}
+                  priority
+                />
+              </motion.div>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                onClick={() => setShowShiny(!showShiny)}
+                className="absolute bottom-4 right-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
+                style={showShiny
+                  ? { background: 'rgba(250,204,21,0.2)', border: '1px solid rgba(250,204,21,0.5)', color: '#fde047' }
+                  : { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }
+                }
+              >
+                ✨ {showShiny ? t.shiny : t.normal}
+              </motion.button>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 pb-8">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <span className="font-pixel text-xs" style={{ color: typeColor }}>
+                  #{String(pokemon.id).padStart(3, '0')}
+                </span>
+                {species?.is_legendary && <Badge color="#fbbf24">⭐ {t.legendary}</Badge>}
+                {species?.is_mythical  && <Badge color="#a78bfa">✨ {t.mythical}</Badge>}
+                {species?.is_baby      && <Badge color="#fb7185">🍼 {t.baby}</Badge>}
+              </div>
+
+              <h1 className="font-black capitalize mb-1 leading-none text-white"
+                style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)' }}>
+                {pokemon.name.replace(/-/g, ' ')}
+              </h1>
+              {genus && <p className="text-slate-500 text-sm italic mb-4">{genus}</p>}
+
+              <div className="flex gap-2 mb-5 flex-wrap">
+                {pokemon.types.map((tp) => <TypeBadge key={tp.type.name} type={tp.type.name} size="lg" />)}
+              </div>
+
+              {description && (
+                <div className="max-w-xl mb-6 p-4 rounded-2xl text-sm leading-relaxed text-slate-300"
+                  style={{ background: `${typeColor}0f`, border: `1px solid ${typeColor}25` }}>
+                  {description}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: t.height,     value: `${(pokemon.height / 10).toFixed(1)} m` },
+                  { label: t.weight,     value: `${(pokemon.weight / 10).toFixed(1)} kg` },
+                  { label: t.baseXP,     value: String(pokemon.base_experience ?? '?') },
+                  { label: t.generation, value: genLabel ?? '?' },
+                  { label: t.habitat,    value: species?.habitat?.name ?? (language === 'es' ? 'Desconocido' : 'Unknown') },
+                  { label: t.catchRate,  value: species ? `${Math.round((species.capture_rate / 255) * 100)}%` : '?' },
+                ].map(({ label, value }) => (
+                  <div key={label} className="px-3 py-2 rounded-xl text-center"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <p className="text-slate-600 text-[9px] uppercase tracking-wider mb-0.5">{label}</p>
+                    <p className="text-white font-bold text-xs capitalize">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Tabs */}
+        <div className="flex gap-2 p-1 rounded-2xl w-fit"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          {tabs.map((tab) => {
+            const active = activeTab === tab.id
+            return (
+              <motion.button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                whileHover={{ scale: active ? 1 : 1.03 }} whileTap={{ scale: 0.97 }}
+                className="px-5 py-2 rounded-xl font-bold text-sm transition-all"
+                style={active
+                  ? { background: typeColor, color: '#fff', boxShadow: `0 4px 20px ${typeColor}55` }
+                  : { color: '#64748b' }
+                }>
+                {tab.icon} {tab.label}
+              </motion.button>
+            )
+          })}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {/* ── Stats ── */}
+          {activeTab === 'stats' && (
+            <motion.div key="stats"
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className="rounded-2xl p-6 space-y-4"
+              style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-black text-white text-xl">{t.stats}</h2>
+                <div className="px-4 py-1.5 rounded-full font-black text-sm"
+                  style={{ background: `${typeColor}20`, color: typeColor, border: `1px solid ${typeColor}40` }}>
+                  {t.total}: {total}
+                </div>
+              </div>
+              {STAT_ORDER.map((statName, i) => {
+                const s = pokemon.stats.find((x) => x.stat.name === statName)
+                if (!s) return null
+                return <StatBar key={statName} statName={statName} value={s.base_stat} delay={i * 0.1} />
+              })}
+              {/* Circular stat rings */}
+              <div className="mt-6 pt-4 border-t border-white/5 grid grid-cols-3 sm:grid-cols-6 gap-3">
+                {STAT_ORDER.map((statName) => {
+                  const s = pokemon.stats.find((x) => x.stat.name === statName)
+                  if (!s) return null
+                  const pct = Math.min((s.base_stat / 180) * 100, 100)
+                  const shortLabel = T[language].statLabels[statName] ?? statName
+                  return (
+                    <div key={statName} className="flex flex-col items-center gap-1">
+                      <div className="relative w-12 h-12">
+                        <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                          <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
+                          <motion.circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke={typeColor} strokeWidth="3" strokeLinecap="round"
+                            strokeDasharray="100" strokeDashoffset={100}
+                            animate={{ strokeDashoffset: 100 - pct }}
+                            transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center font-black text-xs text-white">
+                          {s.base_stat}
+                        </span>
+                      </div>
+                      <span className="text-[9px] uppercase tracking-wider text-slate-600">{shortLabel}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Abilities ── */}
+          {activeTab === 'abilities' && (
+            <motion.div key="abilities"
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className="space-y-3">
+              <h2 className="font-black text-white text-xl mb-4">{t.abilities}</h2>
+              {pokemon.abilities.map((a, i) => (
+                <AbilityCard
+                  key={a.ability.name}
+                  name={a.ability.name}
+                  isHidden={a.is_hidden}
+                  index={i}
+                  typeColor={typeColor}
+                  delay={i * 0.1}
+                />
+              ))}
+            </motion.div>
+          )}
+
+          {/* ── Moves ── */}
+          {activeTab === 'moves' && (
+            <motion.div key="moves"
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className="space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <h2 className="font-black text-white text-xl">
+                  {t.moves} <span className="text-slate-600 font-normal text-base">({pokemon.moves.length})</span>
+                </h2>
+                <input type="text" placeholder={t.searchMoves}
+                  value={moveSearch} onChange={(e) => setMoveSearch(e.target.value)}
+                  className="px-4 py-2 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none w-48"
+                  style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(255,255,255,0.07)' }}
+                />
+              </div>
+
+              {!moveSearch ? (
+                <div>
+                  <p className="text-slate-600 text-xs uppercase tracking-widest mb-3 font-bold">{t.learnedByLevelUp}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {levelMoves.map((m, i) => {
+                      const lvl = m.version_group_details.find((d) => d.move_learn_method.name === 'level-up')?.level_learned_at ?? 0
+                      const displayName = moveNames.get(m.move.name) ?? m.move.name.replace(/-/g, ' ')
+                      return (
+                        <motion.div key={m.move.name}
+                          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                          transition={{ delay: Math.min(i * 0.015, 0.5) }}
+                          className="flex items-center justify-between px-3 py-2 rounded-xl"
+                          style={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                          <span className="text-white text-xs font-semibold capitalize truncate mr-2">
+                            {displayName}
+                          </span>
+                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                            style={{ background: `${typeColor}20`, color: typeColor }}>
+                            {lvl === 0 ? '—' : `Lv${lvl}`}
+                          </span>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {filteredMoves.map((m) => (
+                    <div key={m.move.name} className="px-3 py-2 rounded-xl"
+                      style={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-white text-xs capitalize">
+                        {moveNames.get(m.move.name) ?? m.move.name.replace(/-/g, ' ')}
+                      </span>
+                    </div>
+                  ))}
+                  {filteredMoves.length === 0 && (
+                    <p className="col-span-full text-center text-slate-600 py-8">
+                      {language === 'es' ? 'No se encontraron movimientos.' : 'No moves found.'}
+                    </p>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Evolution Chain ── */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+          className="rounded-2xl p-6"
+          style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <h2 className="font-black text-white text-xl mb-6 flex items-center gap-2">
+            <span style={{ color: typeColor }}>🔄</span>{' '}
+            {language === 'es' ? 'Cadena Evolutiva' : 'Evolution Chain'}
+          </h2>
+          {evolutionChain
+            ? <EvolutionChain chain={evolutionChain} currentPokemonId={pokemon.id} />
+            : <div className="flex justify-center py-4"><LoadingSpinner size={40} text="Loading..." /></div>
+          }
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
+function Badge({ children, color }: { children: React.ReactNode; color: string }) {
+  return (
+    <span className="px-2.5 py-1 rounded-full text-xs font-black"
+      style={{ background: `${color}20`, border: `1px solid ${color}44`, color }}>
+      {children}
+    </span>
+  )
+}

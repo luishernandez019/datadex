@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-slate-950: #020617;
+  --color-slate-900: #0f172a;
+  --color-slate-850: #131c2e;
+  --color-slate-800: #1e293b;
+  --color-slate-700: #334155;
+
+  --font-pixel: "Press Start 2P", monospace;
+  --font-pokemon: "Nunito", sans-serif;
+
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-spin-slow: spin 6s linear infinite;
+  --animate-shimmer: shimmer 1.5s infinite;
+  --animate-pulse-slow: pulse 3s ease-in-out infinite;
+  --animate-fade-in: fade-in 0.4s ease-out both;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-12px); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* ─── Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: #0a0f1e;
+  color: #f1f5f9;
+  font-family: "Nunito", sans-serif;
+  min-height: 100vh;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ─── Skeleton shimmer ──────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #2d3f55 50%, #1e293b 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ─── Dot grid background ───────────────────────────────── */
+.dot-grid {
+  background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ─── Type glow helper (used by JS via inline style) ─────── */
+.type-shadow { box-shadow: 0 0 30px var(--glow-color, transparent); }
+
+/* ─── Glass card ─────────────────────────────────────────── */
+.glass {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Pokeball decorative SVG spin ──────────────────────── */
+.pokeball-spin { animation: spin 8s linear infinite; }
+
+/* ─── Table row hover flash ──────────────────────────────── */
+.row-hover-border {
+  border-left: 3px solid transparent;
+  transition: border-color 0.2s ease;
+}
+.row-hover-border:hover {
+  border-left-color: var(--row-accent, #ef4444);
+}
+
+/* ─── Stat bar fill animation ────────────────────────────── */
+@keyframes bar-fill {
+  from { width: 0%; }
+  to   { width: var(--bar-target, 0%); }
+}
+.stat-bar-fill {
+  animation: bar-fill 1s ease-out both;
+}
+
+/* ─── Pixel font utility ─────────────────────────────────── */
+.font-pixel { font-family: "Press Start 2P", monospace; }

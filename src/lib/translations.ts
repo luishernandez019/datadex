@@ -1,0 +1,153 @@
+export type Lang = 'en' | 'es'
+
+export const T = {
+  en: {
+    // Nav
+    allGenerations: 'All Generations',
+    // Home hero
+    heroSubtitle: 'Explore every Pokémon across all',
+    heroGenerations: '9 generations',
+    heroHint: 'Sort by stats, filter by type, click to discover.',
+    hintSort: '↑↓ Sort any column',
+    hintSearch: '🔍 Search by name or #',
+    hintFilter: '🎯 Filter by type',
+    // Table columns (non-stat)
+    colId: '#',
+    colName: 'Name',
+    colType: 'Type',
+    colTotal: 'Total',
+    // Table
+    searchPlaceholder: 'Search by name or #...',
+    allTypes: 'All Types',
+    loadingPokedex: 'Loading Pokédex...',
+    pokemonCount: (n: number) => `${n} Pokémon`,
+    // Stat sort loading
+    loadingStats: (n: number, total: number) => `Loading stats… ${n} / ${total}`,
+    statsReady: 'All stats loaded — full sorting active',
+    // Detail page tabs
+    stats: 'Stats',
+    moves: 'Moves',
+    abilities: 'Abilities',
+    // Detail page labels
+    height: 'Height',
+    weight: 'Weight',
+    baseXP: 'Base XP',
+    generation: 'Generation',
+    habitat: 'Habitat',
+    catchRate: 'Catch Rate',
+    total: 'Total',
+    shiny: 'Shiny',
+    normal: 'Normal',
+    hiddenAbility: 'Hidden Ability',
+    learnedByLevelUp: 'Learned by Level Up',
+    searchMoves: 'Search moves...',
+    noEvolution: 'This Pokémon does not evolve.',
+    loadingPokemon: 'Loading Pokémon...',
+    backToPokedex: '← Datadex',
+    noDescription: 'No description available.',
+    legendary: 'Legendary',
+    mythical: 'Mythical',
+    baby: 'Baby',
+    // Stat names (short)
+    statLabels: {
+      hp: 'HP',
+      attack: 'ATK',
+      defense: 'DEF',
+      'special-attack': 'SP.ATK',
+      'special-defense': 'SP.DEF',
+      speed: 'SPD',
+    } as Record<string, string>,
+  },
+  es: {
+    allGenerations: 'Todas las Generaciones',
+    // Home hero
+    heroSubtitle: 'Explora cada Pokémon en las',
+    heroGenerations: '9 generaciones',
+    heroHint: 'Ordena por estadísticas, filtra por tipo, haz clic para descubrir.',
+    hintSort: '↑↓ Ordena cualquier columna',
+    hintSearch: '🔍 Busca por nombre o #',
+    hintFilter: '🎯 Filtra por tipo',
+    // Table columns (non-stat)
+    colId: '#',
+    colName: 'Nombre',
+    colType: 'Tipo',
+    colTotal: 'Total',
+    searchPlaceholder: 'Buscar por nombre o #...',
+    allTypes: 'Todos los Tipos',
+    loadingPokedex: 'Cargando Pokédex...',
+    pokemonCount: (n: number) => `${n} Pokémon`,
+    loadingStats: (n: number, total: number) => `Cargando estadísticas… ${n} / ${total}`,
+    statsReady: 'Estadísticas listas — orden completo activo',
+    stats: 'Estadísticas',
+    moves: 'Movimientos',
+    abilities: 'Habilidades',
+    height: 'Altura',
+    weight: 'Peso',
+    baseXP: 'XP Base',
+    generation: 'Generación',
+    habitat: 'Hábitat',
+    catchRate: 'Tasa Captura',
+    total: 'Total',
+    shiny: 'Shiny',
+    normal: 'Normal',
+    hiddenAbility: 'Habilidad Oculta',
+    learnedByLevelUp: 'Aprendido por Nivel',
+    searchMoves: 'Buscar movimientos...',
+    noEvolution: 'Este Pokémon no evoluciona.',
+    loadingPokemon: 'Cargando Pokémon...',
+    backToPokedex: '← Datadex',
+    noDescription: 'Sin descripción disponible.',
+    legendary: 'Legendario',
+    mythical: 'Mítico',
+    baby: 'Bebé',
+    statLabels: {
+      hp: 'PS',
+      attack: 'ATQ',
+      defense: 'DEF',
+      'special-attack': 'ATQ.ESP',
+      'special-defense': 'DEF.ESP',
+      speed: 'VEL',
+    } as Record<string, string>,
+  },
+} as const
+
+export type TKeys = keyof typeof T['en']
+
+export const GEN_RANGES: Record<number, [number, number]> = {
+  1: [1,   151],
+  2: [152, 251],
+  3: [252, 386],
+  4: [387, 493],
+  5: [494, 649],
+  6: [650, 721],
+  7: [722, 809],
+  8: [810, 905],
+  9: [906, 1302],
+}
+
+/** Official Spanish type names used in the games */
+export const TYPE_NAMES_ES: Record<string, string> = {
+  normal:   'Normal',
+  fire:     'Fuego',
+  water:    'Agua',
+  electric: 'Eléctrico',
+  grass:    'Planta',
+  ice:      'Hielo',
+  fighting: 'Lucha',
+  poison:   'Veneno',
+  ground:   'Tierra',
+  flying:   'Volador',
+  psychic:  'Psíquico',
+  bug:      'Bicho',
+  rock:     'Roca',
+  ghost:    'Fantasma',
+  dragon:   'Dragón',
+  dark:     'Siniestro',
+  steel:    'Acero',
+  fairy:    'Hada',
+}
+
+export const GEN_LABELS: Record<number, string> = {
+  1: 'Gen I', 2: 'Gen II', 3: 'Gen III', 4: 'Gen IV',
+  5: 'Gen V', 6: 'Gen VI', 7: 'Gen VII', 8: 'Gen VIII', 9: 'Gen IX',
+}
