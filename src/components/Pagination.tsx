@@ -33,7 +33,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-4 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+        className="px-4 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer transition-colors"
         style={btnBase}
       >
         ← Prev
@@ -47,7 +47,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             key={page}
             whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
             onClick={() => onPageChange(page)}
-            className="w-9 h-9 rounded-xl text-sm font-black transition-all"
+            className="w-9 h-9 rounded-xl text-sm font-black cursor-pointer transition-all"
             style={currentPage === page
               ? { background: '#ef4444', color: '#fff', boxShadow: '0 4px 16px rgba(239,68,68,0.4)', border: 'none' }
               : { ...btnBase, color: '#94a3b8' }
@@ -61,7 +61,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-4 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+        className="px-4 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer transition-colors"
         style={btnBase}
       >
         Next →

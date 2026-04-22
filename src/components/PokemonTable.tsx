@@ -289,7 +289,7 @@ export default function PokemonTable() {
             </tr>
           </thead>
           <tbody>
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {isPageLoading
                 ? Array.from({ length: itemsPerPage }).map((_, i) => <SkeletonRow key={i} />)
                 : pageItems.map((entry, idx) => {
