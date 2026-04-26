@@ -268,10 +268,10 @@ function LangToggle() {
           key={lang}
           whileTap={{ scale: 0.92 }}
           onClick={() => setLanguage(lang)}
-          className="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all"
+          className="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all"
           style={language === lang
-            ? { background: '#ef4444', color: '#fff' }
-            : { color: '#475569' }
+            ? { background: '#ef4444', color: '#fff', cursor: 'pointer' }
+            : { color: '#475569', cursor: 'pointer' }
           }
         >
           {lang}
@@ -289,10 +289,10 @@ function GenPill({ label, active, onClick, accent }: {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className="px-2.5 py-1 rounded-full text-[10px] font-black whitespace-nowrap cursor-pointer transition-all"
+      className="px-2.5 py-1 rounded-full text-[10px] font-black whitespace-nowrap transition-all"
       style={active
-        ? { background: accent, color: '#fff', boxShadow: `0 0 12px ${accent}55` }
-        : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#64748b' }
+        ? { background: accent, color: '#fff', boxShadow: `0 0 12px ${accent}55`, cursor: 'pointer' }
+        : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#64748b', cursor: 'pointer' }
       }
     >
       {label}

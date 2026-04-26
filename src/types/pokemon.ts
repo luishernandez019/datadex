@@ -140,6 +140,9 @@ export interface MoveDetail {
 export type SortField = 'id' | 'name' | 'type' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed' | 'total'
 export type SortOrder = 'asc' | 'desc'
 
+/** Minimal per-Pokémon data pre-built at deploy time for instant stat sorting. */
+export type PokemonStats = Pick<Pokemon, 'id' | 'types' | 'stats'>
+
 export const TYPE_COLORS: Record<string, string> = {
   normal: '#A8A878',
   fire: '#F08030',

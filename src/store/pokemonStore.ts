@@ -1,24 +1,21 @@
 import { create } from 'zustand'
-import type { Pokemon, SortField, SortOrder } from '@/types/pokemon'
+import type { SortField, SortOrder } from '@/types/pokemon'
 import type { Lang } from '@/lib/translations'
 
 interface PokemonStore {
-  pokemonCache: Record<number, Pokemon>
   sortField: SortField
   sortOrder: SortOrder
   searchQuery: string
   typeFilter: string
-  generationFilter: number | null  // 1-9, null = all
+  generationFilter: number | null
   currentPage: number
   itemsPerPage: number
   language: Lang
-  loadAllStats: boolean            // triggers background full-load when stat sort is active
+  loadAllStats: boolean
 
-  setPokemonCache: (id: number, pokemon: Pokemon) => void
-  setPokemonCacheBatch: (pokemon: Pokemon[]) => void
   setSortField: (field: SortField) => void
   setSortOrder: (order: SortOrder) => void
-  toggleSort: (field: SortField) => void
+  toggleSort: (field: SortField, defaultOrder?: SortOrder) => void
   setSearchQuery: (query: string) => void
   setTypeFilter: (type: string) => void
   setGenerationFilter: (gen: number | null) => void
@@ -33,7 +30,6 @@ function readLang(): Lang {
 }
 
 export const usePokemonStore = create<PokemonStore>((set) => ({
-  pokemonCache: {},
   sortField: 'id',
   sortOrder: 'asc',
   searchQuery: '',
@@ -41,26 +37,16 @@ export const usePokemonStore = create<PokemonStore>((set) => ({
   generationFilter: null,
   currentPage: 1,
   itemsPerPage: 20,
-  language: 'en',   // initialised client-side in Navbar to avoid SSR mismatch
+  language: 'en',
   loadAllStats: false,
-
-  setPokemonCache: (id, pokemon) =>
-    set((s) => ({ pokemonCache: { ...s.pokemonCache, [id]: pokemon } })),
-
-  setPokemonCacheBatch: (list) =>
-    set((s) => {
-      const next = { ...s.pokemonCache }
-      list.forEach((p) => { next[p.id] = p })
-      return { pokemonCache: next }
-    }),
 
   setSortField: (field) => set({ sortField: field }),
   setSortOrder: (order) => set({ sortOrder: order }),
 
-  toggleSort: (field) =>
+  toggleSort: (field, defaultOrder: SortOrder = 'asc') =>
     set((s) => {
       if (s.sortField === field) return { sortOrder: s.sortOrder === 'asc' ? 'desc' : 'asc' }
-      return { sortField: field, sortOrder: 'asc' }
+      return { sortField: field, sortOrder: defaultOrder }
     }),
 
   setSearchQuery: (query) => set({ searchQuery: query, currentPage: 1 }),
@@ -76,7 +62,6 @@ export const usePokemonStore = create<PokemonStore>((set) => ({
   setLoadAllStats: (v) => set({ loadAllStats: v }),
 }))
 
-// Hydrate language from localStorage once on client
 export function hydrateLanguage() {
   usePokemonStore.setState({ language: readLang() })
 }

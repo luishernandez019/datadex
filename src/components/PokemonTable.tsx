@@ -1,19 +1,22 @@
 'use client'
 
 import { useMemo, useCallback } from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { usePokemonStore } from '@/store/pokemonStore'
+import { usePokemonCacheStore } from '@/store/pokemonCacheStore'
 import { usePokemonList } from '@/hooks/usePokemonList'
 import { usePokemonPageDetails } from '@/hooks/usePokemonDetail'
+import { useAllPokemonStats } from '@/hooks/useAllPokemonStats'
 import { useAllPokemonLoader } from '@/hooks/useAllPokemonLoader'
 import { getSpriteUrl } from '@/lib/api'
 import TypeBadge from './TypeBadge'
 import Pagination from './Pagination'
 import LoadingSpinner from './LoadingSpinner'
-import { TYPE_COLORS } from '@/types/pokemon'
+import { TYPE_COLORS, STAT_COLORS } from '@/types/pokemon'
 import { T, GEN_RANGES, TYPE_NAMES_ES } from '@/lib/translations'
-import type { Pokemon, SortField } from '@/types/pokemon'
+import type { Pokemon, PokemonStats, PokemonStat, PokemonType, SortField } from '@/types/pokemon'
 
 const POKEMON_TYPES = [
   'fire','water','grass','electric','psychic','ice','dragon',
@@ -21,24 +24,17 @@ const POKEMON_TYPES = [
   'rock','bug','ghost','steel',
 ]
 
-const STAT_COLORS: Record<string, string> = {
-  hp:               '#FF5959',
-  attack:           '#F5AC78',
-  defense:          '#FAE078',
-  'special-attack': '#9DB7F5',
-  'special-defense':'#A7DB8D',
-  speed:            '#FA92B2',
-}
-
 const STAT_FIELDS = new Set<SortField>(['hp','attack','defense','special-attack','special-defense','speed','total'])
 
-function getStat(p: Pokemon, name: string) {
+type DisplayData = Pick<Pokemon | PokemonStats, 'types' | 'stats'>
+
+function getStat(p: { stats: PokemonStat[] }, name: string) {
   return p.stats.find((s) => s.stat.name === name)?.base_stat ?? 0
 }
-function getTotal(p: Pokemon) {
+function getTotal(p: { stats: PokemonStat[] }) {
   return p.stats.reduce((s, st) => s + st.base_stat, 0)
 }
-function primaryColor(p: Pokemon) {
+function primaryColor(p: { types: PokemonType[] }) {
   return TYPE_COLORS[p.types[0]?.type.name ?? 'normal'] ?? '#A8A878'
 }
 
@@ -84,10 +80,13 @@ function StatNum({ value, stat }: { value: number; stat: string }) {
 export default function PokemonTable() {
   const {
     sortField, sortOrder, searchQuery, typeFilter, generationFilter,
-    currentPage, itemsPerPage, pokemonCache,
+    currentPage, itemsPerPage,
     toggleSort, setSearchQuery, setTypeFilter, setCurrentPage,
     language, loadAllStats, setLoadAllStats,
   } = usePokemonStore()
+
+  const pokemonCache = usePokemonCacheStore((s) => s.pokemonCache)
+  const statsCache   = usePokemonCacheStore((s) => s.statsCache)
 
   const t = T[language]
   const router = useRouter()
@@ -107,35 +106,36 @@ export default function PokemonTable() {
 
   const { data: allPokemon, isLoading: listLoading } = usePokemonList()
 
-  // Filtered + sorted list
+  // Merged lookup: prefer full Pokemon, fall back to pre-built stats
+  const getDisplayData = useCallback(
+    (id: number): DisplayData | undefined => pokemonCache[id] ?? statsCache[id],
+    [pokemonCache, statsCache],
+  )
+
   const filtered = useMemo(() => {
     if (!allPokemon) return []
     let list = [...allPokemon]
 
-    // Generation filter
     if (generationFilter !== null) {
       const [min, max] = GEN_RANGES[generationFilter] ?? [1, 9999]
       list = list.filter((p) => p.id >= min && p.id <= max)
     }
 
-    // Search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       list = list.filter((p) => p.name.includes(q) || String(p.id).startsWith(q))
     }
 
-    // Type filter
     if (typeFilter) {
       list = list.filter((p) => {
-        const c = pokemonCache[p.id]
-        return !c || c.types.some((t) => t.type.name === typeFilter)
+        const d = getDisplayData(p.id)
+        return d?.types.some((t) => t.type.name === typeFilter) ?? false
       })
     }
 
-    // Sort
     list.sort((a, b) => {
-      const ac = pokemonCache[a.id]
-      const bc = pokemonCache[b.id]
+      const ac = getDisplayData(a.id)
+      const bc = getDisplayData(b.id)
 
       if (sortField === 'id') return sortOrder === 'asc' ? a.id - b.id : b.id - a.id
       if (sortField === 'name') {
@@ -143,49 +143,62 @@ export default function PokemonTable() {
         return sortOrder === 'asc' ? cmp : -cmp
       }
 
-      // Cache-dependent sorts: uncached pokemon go to the end
       if (!ac && !bc) return a.id - b.id
       if (!ac) return 1
       if (!bc) return -1
 
-      let av: number | string, bv: number | string
       if (sortField === 'type') {
-        av = ac.types[0]?.type.name ?? ''
-        bv = bc.types[0]?.type.name ?? ''
-        const cmp = (av as string).localeCompare(bv as string)
+        const av = ac.types[0]?.type.name ?? ''
+        const bv = bc.types[0]?.type.name ?? ''
+        const cmp = av.localeCompare(bv)
         return sortOrder === 'asc' ? cmp : -cmp
       }
-      av = sortField === 'total' ? getTotal(ac) : getStat(ac, sortField)
-      bv = sortField === 'total' ? getTotal(bc) : getStat(bc, sortField)
-      return sortOrder === 'asc' ? (av as number) - (bv as number) : (bv as number) - (av as number)
+      const av = sortField === 'total' ? getTotal(ac) : getStat(ac, sortField)
+      const bv = sortField === 'total' ? getTotal(bc) : getStat(bc, sortField)
+      return sortOrder === 'asc' ? av - bv : bv - av
     })
 
     return list
-  }, [allPokemon, searchQuery, typeFilter, generationFilter, sortField, sortOrder, pokemonCache])
+  }, [allPokemon, searchQuery, typeFilter, generationFilter, sortField, sortOrder, getDisplayData])
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage)
   const pageItems  = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
   const pageIds    = pageItems.map((p) => p.id)
 
   usePokemonPageDetails(pageIds)
-  const isPageLoading = pageIds.some((id) => !pokemonCache[id])
+  // Skeleton only when neither full cache nor stats cache has the data
+  const isPageLoading = pageIds.some((id) => !pokemonCache[id] && !statsCache[id])
 
-  // Background full-stats loader — only runs when loadAllStats is true
   const allIds = useMemo(() => allPokemon?.map((p) => p.id) ?? [], [allPokemon])
-  const { total: loaderTotal, loaded: loaderLoaded, isDone: loaderDone } =
-    useAllPokemonLoader(allIds, loadAllStats)
+
+  // Primary: single-request pre-built JSON (generated at build time)
+  const { hasPrebuilt, isLoading: statsJsonLoading, isDone: statsJsonDone } =
+    useAllPokemonStats(loadAllStats)
+
+  // Fallback: chunk loader (used in dev when pokemon-stats.json doesn't exist)
+  const useChunkFallback = loadAllStats && statsJsonDone && !hasPrebuilt
+  const { total: chunkTotal, loaded: chunkLoaded, isDone: chunkDone } =
+    useAllPokemonLoader(allIds, useChunkFallback)
+
+  const loaderDone    = hasPrebuilt || chunkDone
+  const showChunkBar  = useChunkFallback && !chunkDone
 
   const handleSort = useCallback(
     (field: SortField) => {
-      toggleSort(field)
+      toggleSort(field, STAT_FIELDS.has(field) ? 'desc' : 'asc')
       setCurrentPage(1)
-      // Activate background loader when user sorts by a stat field
       if (STAT_FIELDS.has(field) && !loadAllStats) setLoadAllStats(true)
     },
     [toggleSort, setCurrentPage, loadAllStats, setLoadAllStats],
   )
 
-  const cachedCount = Object.keys(pokemonCache).length
+  const handleTypeFilter = useCallback(
+    (type: string) => {
+      setTypeFilter(type)
+      if (type && !loadAllStats) setLoadAllStats(true)
+    },
+    [setTypeFilter, loadAllStats, setLoadAllStats],
+  )
 
   if (listLoading) return <LoadingSpinner size={80} text={t.loadingPokedex} />
 
@@ -209,7 +222,7 @@ export default function PokemonTable() {
 
         <select
           value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
+          onChange={(e) => handleTypeFilter(e.target.value)}
           className="px-4 py-2.5 rounded-xl text-sm text-white focus:outline-none cursor-pointer capitalize"
           style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(255,255,255,0.07)' }}
         >
@@ -238,28 +251,25 @@ export default function PokemonTable() {
           >
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               className="w-4 h-4 rounded-full border-2 border-indigo-400 border-t-transparent flex-shrink-0" />
-            <span className="text-indigo-300">
-              {t.loadingStats(loaderLoaded + cachedCount - (allIds.length - loaderTotal), allIds.length)}
-            </span>
-            {/* Progress bar */}
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(99,102,241,0.2)' }}>
-              <motion.div className="h-full rounded-full bg-indigo-400"
-                animate={{ width: `${((loaderLoaded / loaderTotal) * 100).toFixed(1)}%` }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-            <span className="text-indigo-500 text-xs tabular-nums flex-shrink-0">
-              {Math.round((loaderLoaded / loaderTotal) * 100)}%
-            </span>
-          </motion.div>
-        )}
-        {loadAllStats && loaderDone && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs text-green-400"
-            style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}
-          >
-            <span>✓</span> {t.statsReady}
+
+            {showChunkBar ? (
+              <>
+                <span className="text-indigo-300">
+                  {t.loadingStats(chunkLoaded, chunkTotal)}
+                </span>
+                <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(99,102,241,0.2)' }}>
+                  <motion.div className="h-full rounded-full bg-indigo-400"
+                    animate={{ width: `${((chunkLoaded / chunkTotal) * 100).toFixed(1)}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+                <span className="text-indigo-500 text-xs tabular-nums flex-shrink-0">
+                  {Math.round((chunkLoaded / chunkTotal) * 100)}%
+                </span>
+              </>
+            ) : (
+              <span className="text-indigo-300">{t.loadingPokedex}</span>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -280,7 +290,6 @@ export default function PokemonTable() {
                 >
                   {col.label}
                   <SortBtn field={col.key} active={sortField} order={sortOrder} />
-                  {/* Indicator that this stat sort needs data loading */}
                   {STAT_FIELDS.has(col.key) && !loadAllStats && (
                     <span className="ml-1 text-indigo-500 text-[8px]">↻</span>
                   )}
@@ -293,9 +302,9 @@ export default function PokemonTable() {
               {isPageLoading
                 ? Array.from({ length: itemsPerPage }).map((_, i) => <SkeletonRow key={i} />)
                 : pageItems.map((entry, idx) => {
-                    const pokemon = pokemonCache[entry.id]
-                    const accent  = pokemon ? primaryColor(pokemon) : '#475569'
-                    const total   = pokemon ? getTotal(pokemon) : null
+                    const displayData = getDisplayData(entry.id)
+                    const accent      = displayData ? primaryColor(displayData) : '#475569'
+                    const total       = displayData ? getTotal(displayData) : null
 
                     return (
                       <motion.tr
@@ -321,8 +330,11 @@ export default function PokemonTable() {
                         <td className="px-3 py-2 w-16">
                           <div className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200"
                             style={{ background: `${accent}18` }}>
-                            <img src={getSpriteUrl(entry.id)} alt={entry.name}
-                              width={48} height={48}
+                            <Image
+                              src={getSpriteUrl(entry.id)}
+                              alt={entry.name}
+                              width={48}
+                              height={48}
                               className="object-contain w-12 h-12 group-hover:scale-110 transition-transform duration-300"
                               style={{ imageRendering: 'pixelated' }}
                             />
@@ -346,21 +358,21 @@ export default function PokemonTable() {
                         {/* Type */}
                         <td className="px-3 py-2 min-w-28">
                           <div className="flex gap-1 flex-wrap">
-                            {pokemon
-                              ? pokemon.types.map((t) => <TypeBadge key={t.type.name} type={t.type.name} size="sm" />)
+                            {displayData
+                              ? displayData.types.map((t) => <TypeBadge key={t.type.name} type={t.type.name} size="sm" />)
                               : <span className="text-slate-700 text-xs">—</span>}
                           </div>
                         </td>
 
                         {/* Stats */}
-                        {pokemon ? (
+                        {displayData ? (
                           <>
-                            <StatNum value={getStat(pokemon, 'hp')}             stat="hp" />
-                            <StatNum value={getStat(pokemon, 'attack')}          stat="attack" />
-                            <StatNum value={getStat(pokemon, 'defense')}         stat="defense" />
-                            <StatNum value={getStat(pokemon, 'special-attack')}  stat="special-attack" />
-                            <StatNum value={getStat(pokemon, 'special-defense')} stat="special-defense" />
-                            <StatNum value={getStat(pokemon, 'speed')}           stat="speed" />
+                            <StatNum value={getStat(displayData, 'hp')}             stat="hp" />
+                            <StatNum value={getStat(displayData, 'attack')}          stat="attack" />
+                            <StatNum value={getStat(displayData, 'defense')}         stat="defense" />
+                            <StatNum value={getStat(displayData, 'special-attack')}  stat="special-attack" />
+                            <StatNum value={getStat(displayData, 'special-defense')} stat="special-defense" />
+                            <StatNum value={getStat(displayData, 'speed')}           stat="speed" />
                             <td className="px-2 py-0 text-center w-16">
                               <span className="font-black text-sm tabular-nums" style={{ color: '#c084fc' }}>{total}</span>
                             </td>

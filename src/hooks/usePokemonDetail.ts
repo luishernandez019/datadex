@@ -1,11 +1,11 @@
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { fetchPokemon } from '@/lib/api'
-import { usePokemonStore } from '@/store/pokemonStore'
+import { usePokemonCacheStore } from '@/store/pokemonCacheStore'
 import { useEffect, useRef } from 'react'
 import type { Pokemon } from '@/types/pokemon'
 
 export function usePokemonDetail(id: number | string) {
-  const setPokemonCache = usePokemonStore((s) => s.setPokemonCache)
+  const setPokemonCache = usePokemonCacheStore((s) => s.setPokemonCache)
 
   const query = useQuery({
     queryKey: ['pokemon', id],
@@ -23,8 +23,7 @@ export function usePokemonDetail(id: number | string) {
 }
 
 export function usePokemonPageDetails(ids: number[]) {
-  const setPokemonCacheBatch = usePokemonStore((s) => s.setPokemonCacheBatch)
-  // Track which IDs we've already pushed into the cache to avoid re-triggering on every render
+  const setPokemonCacheBatch = usePokemonCacheStore((s) => s.setPokemonCacheBatch)
   const processedRef = useRef<Set<number>>(new Set())
 
   const queries = useQueries({
@@ -36,8 +35,6 @@ export function usePokemonPageDetails(ids: number[]) {
     })),
   })
 
-  // Use a stable primitive (count of successful queries) as the dependency
-  // so the effect only fires when a new query actually resolves, not on every render
   const successCount = queries.filter((q) => q.isSuccess).length
 
   useEffect(() => {
