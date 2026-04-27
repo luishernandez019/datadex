@@ -165,11 +165,11 @@ function EvoNodeWithVariants({
 
 function Arrow({ stage }: { stage: Stage }) {
   return (
-    <div className="flex flex-col items-center gap-1 px-1 flex-shrink-0">
+    <div className="flex flex-col items-center gap-1 px-1 flex-shrink-0" aria-hidden="true">
       <span className="text-[9px] text-slate-500 text-center capitalize max-w-16 leading-tight">
         {triggerLabel(stage)}
       </span>
-      <svg width="36" height="14" viewBox="0 0 36 14">
+      <svg width="36" height="14" viewBox="0 0 36 14" aria-hidden="true">
         <path d="M0 7 L28 7 M23 2 L32 7 L23 12"
           stroke="#475569" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </svg>

@@ -211,7 +211,8 @@ export default function PokemonTable() {
         <div className="relative flex-1 min-w-48">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm select-none">🔍</span>
           <input
-            type="text"
+            type="search"
+            aria-label={t.searchPlaceholder}
             placeholder={t.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -238,6 +239,7 @@ export default function PokemonTable() {
 
         <div className="relative">
           <select
+            aria-label={language === 'es' ? 'Filtrar por tipo' : 'Filter by type'}
             value={typeFilter}
             onChange={(e) => handleTypeFilter(e.target.value)}
             className="px-4 pr-10 py-2.5 rounded-xl text-sm text-white focus:outline-none cursor-pointer capitalize appearance-none w-full"
@@ -250,7 +252,7 @@ export default function PokemonTable() {
               </option>
             ))}
           </select>
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none select-none">▼</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none select-none" aria-hidden="true">▼</span>
         </div>
 
         <span className="text-slate-600 text-sm tabular-nums">
@@ -297,20 +299,26 @@ export default function PokemonTable() {
       <div className="w-full overflow-x-auto rounded-2xl"
         style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}>
         <table className="w-full min-w-[960px]">
+          <caption className="sr-only">
+            {language === 'es'
+              ? `Tabla Pokédex — ${filtered.length} Pokémon, ordenados por ${sortField} ${sortOrder === 'asc' ? 'ascendente' : 'descendente'}`
+              : `Pokédex table — ${filtered.length} Pokémon, sorted by ${sortField} ${sortOrder}`}
+          </caption>
           <thead>
             <tr style={{ background: 'rgba(30,41,59,0.9)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <th className="px-4 py-4 text-left w-16">
-                <span className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">IMG</span>
+              <th className="px-4 py-4 text-left w-16" scope="col">
+                <span className="text-[10px] text-slate-600 uppercase tracking-widest font-bold" aria-hidden="true">IMG</span>
               </th>
               {columns.map((col) => (
-                <th key={col.key} onClick={() => handleSort(col.key)}
+                <th key={col.key} scope="col" onClick={() => handleSort(col.key)}
+                  aria-sort={sortField === col.key ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
                   className="px-3 py-4 text-left text-[10px] uppercase tracking-widest font-bold cursor-pointer hover:text-slate-200 select-none transition-colors whitespace-nowrap"
                   style={{ color: sortField === col.key ? '#f87171' : '#475569' }}
                 >
                   {col.label}
                   <SortBtn field={col.key} active={sortField} order={sortOrder} />
                   {STAT_FIELDS.has(col.key) && !loadAllStats && (
-                    <span className="ml-1 text-indigo-500 text-[8px]">↻</span>
+                    <span className="ml-1 text-indigo-500 text-[8px]" aria-hidden="true">↻</span>
                   )}
                 </th>
               ))}

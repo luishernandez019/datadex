@@ -30,10 +30,11 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   }
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+    <nav aria-label="Pagination" className="flex items-center justify-center gap-2 mt-4 flex-wrap">
       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        aria-label="Go to previous page"
         className="px-4 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
         style={btnBase}
       >
@@ -42,12 +43,14 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
 
       {pages.map((page, i) =>
         page === '...' ? (
-          <span key={`d${i}`} className="text-slate-600 px-1 select-none">…</span>
+          <span key={`d${i}`} className="text-slate-600 px-1 select-none" aria-hidden="true">…</span>
         ) : (
           <motion.button
             key={page}
             whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
             onClick={() => onPageChange(page)}
+            aria-label={`Go to page ${page}`}
+            aria-current={currentPage === page ? 'page' : undefined}
             className="w-9 h-9 rounded-xl text-sm font-black transition-all"
             style={currentPage === page
               ? { background: '#ef4444', color: '#fff', boxShadow: '0 4px 16px rgba(239,68,68,0.4)', border: 'none', cursor: 'pointer' }
@@ -62,11 +65,12 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        aria-label="Go to next page"
         className="px-4 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
         style={btnBase}
       >
         Next →
       </motion.button>
-    </div>
+    </nav>
   )
 }

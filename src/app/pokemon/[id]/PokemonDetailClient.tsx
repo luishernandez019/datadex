@@ -119,9 +119,9 @@ export default function PokemonDetailClient({ params }: Props) {
           `,
         }} />
         <div className="absolute right-0 top-0 w-[600px] h-[600px] rounded-full -translate-y-1/3 translate-x-1/3 opacity-10"
-          style={{ background: `radial-gradient(circle, ${typeColor}, transparent 70%)` }} />
-        <div className="absolute right-16 top-16 opacity-5">
-          <svg viewBox="0 0 200 200" className="w-72 h-72">
+          style={{ background: `radial-gradient(circle, ${typeColor}, transparent 70%)` }} aria-hidden="true" />
+        <div className="absolute right-16 top-16 opacity-5" aria-hidden="true">
+          <svg viewBox="0 0 200 200" className="w-72 h-72" aria-hidden="true">
             <circle cx="100" cy="100" r="98" fill="none" stroke="white" strokeWidth="5" />
             <path d="M 4 100 A 96 96 0 0 1 196 100" fill="white" fillOpacity="0.5" />
             <rect x="4" y="96" width="192" height="8" fill="white" />
@@ -141,18 +141,22 @@ export default function PokemonDetailClient({ params }: Props) {
             </Link>
             <div className="flex gap-2">
               {pokemon.id > 1 && (
-                <Link href={`/pokemon/${pokemon.id - 1}`}>
+                <Link href={`/pokemon/${pokemon.id - 1}`}
+                  aria-label={`Previous Pokémon — #${String(pokemon.id - 1).padStart(3, '0')}`}>
                   <motion.span whileHover={{ scale: 1.05 }}
                     className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-white text-xs transition-colors cursor-pointer"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
+                    aria-hidden="true">
                     ← #{String(pokemon.id - 1).padStart(3, '0')}
                   </motion.span>
                 </Link>
               )}
-              <Link href={`/pokemon/${pokemon.id + 1}`}>
+              <Link href={`/pokemon/${pokemon.id + 1}`}
+                aria-label={`Next Pokémon — #${String(pokemon.id + 1).padStart(3, '0')}`}>
                 <motion.span whileHover={{ scale: 1.05 }}
                   className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-white text-xs transition-colors cursor-pointer"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  aria-hidden="true">
                   #{String(pokemon.id + 1).padStart(3, '0')} →
                 </motion.span>
               </Link>
@@ -166,7 +170,7 @@ export default function PokemonDetailClient({ params }: Props) {
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-52 h-12 rounded-full blur-2xl opacity-40"
                 style={{ background: typeColor }} />
 
-              <ShinySparkles active={shinyAnimation} />
+              <div aria-hidden="true"><ShinySparkles active={shinyAnimation} /></div>
 
               <motion.div animate={{ y: [0, -16, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
@@ -199,7 +203,8 @@ export default function PokemonDetailClient({ params }: Props) {
                 </motion.div>
               </motion.div>
 
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              <motion.button
+                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   const next = !showShiny
                   setShowShiny(next)
@@ -208,6 +213,8 @@ export default function PokemonDetailClient({ params }: Props) {
                     setTimeout(() => setShinyAnimation(false), 1400)
                   }
                 }}
+                aria-label={showShiny ? 'Showing shiny variant — click to show normal' : 'Show shiny variant'}
+                aria-pressed={showShiny}
                 className="absolute bottom-4 right-0 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-all"
                 style={showShiny
                   ? { background: 'rgba(250,204,21,0.2)', border: '1px solid rgba(250,204,21,0.5)', color: '#fde047' }

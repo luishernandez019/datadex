@@ -65,7 +65,7 @@ export default function Navbar() {
                 label={language === 'es' ? 'Todos' : 'All'}
                 active={generationFilter === null}
                 onClick={() => setGenerationFilter(null)}
-                accent="#ef4444"
+                accent="#dc2626"
               />
               {gens.map((gen) => (
                 <GenPill
@@ -176,7 +176,11 @@ function NavSearch() {
           🔍
         </span>
         <input
-          type="text"
+          type="search"
+          aria-label={language === 'es' ? 'Buscar Pokémon por nombre o número' : 'Search Pokémon by name or number'}
+          aria-autocomplete="list"
+          aria-expanded={open && suggestions.length > 0}
+          aria-controls="navbar-search-suggestions"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)
@@ -214,6 +218,9 @@ function NavSearch() {
       <AnimatePresence>
         {open && suggestions.length > 0 && (
           <motion.ul
+            id="navbar-search-suggestions"
+            role="listbox"
+            aria-label={language === 'es' ? 'Sugerencias de búsqueda' : 'Search suggestions'}
             initial={{ opacity: 0, y: -4, scaleY: 0.95 }}
             animate={{ opacity: 1, y: 0, scaleY: 1 }}
             exit={{ opacity: 0, y: -4, scaleY: 0.95 }}
@@ -241,6 +248,8 @@ function NavSearch() {
                 <li key={entry.id}>
                   <button
                     type="button"
+                    role="option"
+                    aria-selected={i === activeIndex}
                     onMouseDown={(e) => { e.preventDefault(); handleSelect(entry.id) }}
                     onMouseEnter={() => setActiveIndex(i)}
                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left cursor-pointer transition-colors"
@@ -261,7 +270,7 @@ function NavSearch() {
                       {entry.name.replace(/-/g, ' ')}
                     </span>
                     <span className="font-pixel text-[9px] flex-shrink-0"
-                      style={{ color: isActive ? '#ef4444' : '#475569' }}>
+                      style={{ color: isActive ? '#ef4444' : '#94a3b8' }}>
                       #{String(entry.id).padStart(3, '0')}
                     </span>
                   </button>
@@ -277,6 +286,7 @@ function NavSearch() {
 
 function LangToggle() {
   const { language, setLanguage } = usePokemonStore()
+  const labels: Record<string, string> = { en: 'Switch to English', es: 'Cambiar a español' }
   return (
     <>
       {(['en', 'es'] as const).map((lang) => (
@@ -284,10 +294,12 @@ function LangToggle() {
           key={lang}
           whileTap={{ scale: 0.92 }}
           onClick={() => setLanguage(lang)}
+          aria-label={labels[lang]}
+          aria-pressed={language === lang}
           className="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all"
           style={language === lang
-            ? { background: '#ef4444', color: '#fff', cursor: 'pointer' }
-            : { color: '#475569', cursor: 'pointer' }
+            ? { background: '#dc2626', color: '#fff', cursor: 'pointer' }
+            : { color: '#94a3b8', cursor: 'pointer' }
           }
         >
           {lang}
@@ -305,10 +317,11 @@ function GenPill({ label, active, onClick, accent }: {
       whileHover={{ opacity: 0.8 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
+      aria-pressed={active}
       className="px-2.5 py-1 rounded-full text-[10px] font-black whitespace-nowrap transition-all"
       style={active
         ? { background: accent, color: '#fff', boxShadow: `0 0 12px ${accent}55`, cursor: 'pointer' }
-        : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#64748b', cursor: 'pointer' }
+        : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', cursor: 'pointer' }
       }
     >
       {label}
@@ -318,7 +331,7 @@ function GenPill({ label, active, onClick, accent }: {
 
 function PokeballSVG() {
   return (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-lg">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-lg" aria-hidden="true">
       <circle cx="50" cy="50" r="48" fill="#1e293b" stroke="#334155" strokeWidth="2" />
       <path d="M 4 50 A 46 46 0 0 1 96 50" fill="#ef4444" />
       <path d="M 4 50 A 46 46 0 0 0 96 50" fill="#f1f5f9" />

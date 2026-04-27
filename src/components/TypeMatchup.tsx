@@ -70,27 +70,29 @@ export default function TypeMatchup({ types, typeColor }: Props) {
       key: 'weak',
       label: language === 'es' ? 'Debilidades' : 'Weaknesses',
       headerColor: '#f97316',
-      items: [
-        ...effectiveness.filter((e) => e.multiplier === 4),
-        ...effectiveness.filter((e) => e.multiplier === 2),
-      ],
+      subgroups: [
+        { multiplier: 4,   items: effectiveness.filter((e) => e.multiplier === 4) },
+        { multiplier: 2,   items: effectiveness.filter((e) => e.multiplier === 2) },
+      ].filter((s) => s.items.length > 0),
     },
     {
       key: 'resist',
       label: language === 'es' ? 'Resistencias' : 'Resistances',
       headerColor: '#4ade80',
-      items: [
-        ...effectiveness.filter((e) => e.multiplier === 0.25),
-        ...effectiveness.filter((e) => e.multiplier === 0.5),
-      ],
+      subgroups: [
+        { multiplier: 0.25, items: effectiveness.filter((e) => e.multiplier === 0.25) },
+        { multiplier: 0.5,  items: effectiveness.filter((e) => e.multiplier === 0.5)  },
+      ].filter((s) => s.items.length > 0),
     },
     {
       key: 'immune',
       label: language === 'es' ? 'Inmunidades' : 'Immunities',
       headerColor: '#a78bfa',
-      items: effectiveness.filter((e) => e.multiplier === 0),
+      subgroups: [
+        { multiplier: 0, items: effectiveness.filter((e) => e.multiplier === 0) },
+      ].filter((s) => s.items.length > 0),
     },
-  ].filter((g) => g.items.length > 0)
+  ].filter((g) => g.subgroups.length > 0)
 
   return (
     <motion.div
@@ -112,39 +114,41 @@ export default function TypeMatchup({ types, typeColor }: Props) {
               style={{ color: group.headerColor }}>
               {group.label}
             </p>
-            <div className="flex flex-wrap gap-2">
-              {group.items.map(({ type, multiplier }) => {
-                const typeColor = TYPE_COLORS[type] ?? '#A8A878'
-                const typeName  = language === 'es' ? (TYPE_NAMES_ES[type] ?? type) : type
-                const icon      = TYPE_ICONS[type] ?? ''
-                const mult      = MULT_CONFIG[multiplier]
-
+            <div className="space-y-2">
+              {group.subgroups.map(({ multiplier, items }) => {
+                const mult = MULT_CONFIG[multiplier]
                 if (!mult) return null
                 return (
-                  <div
-                    key={type}
-                    className="flex items-center rounded-lg overflow-hidden text-xs font-black"
-                    style={{ border: `1px solid ${mult.color}55` }}
-                  >
-                    {/* Type half — uses effectiveness color so weakness/resistance is obvious */}
-                    <div
-                      className="flex items-center gap-1.5 px-3 py-1.5"
-                      style={{ background: `${mult.color}20`, color: mult.color }}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ background: typeColor }}
-                        title={type}
-                      />
-                      <span>{icon}</span>
-                      <span className="uppercase tracking-wide">{typeName}</span>
-                    </div>
-                    {/* Multiplier half */}
-                    <div
-                      className="px-2.5 py-1.5 tabular-nums"
-                      style={{ background: `${mult.color}35`, color: mult.color }}
+                  <div key={multiplier} className="flex items-start gap-3">
+                    {/* Multiplier badge anchored to the left */}
+                    <span
+                      className="flex-shrink-0 mt-0.5 px-2 py-1 rounded-md text-[11px] font-black tabular-nums w-10 text-center"
+                      style={{ background: `${mult.color}25`, color: mult.color, border: `1px solid ${mult.color}40` }}
                     >
                       {mult.label}
+                    </span>
+                    {/* Pills row */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.map(({ type }) => {
+                        const tc       = TYPE_COLORS[type] ?? '#A8A878'
+                        const typeName = language === 'es' ? (TYPE_NAMES_ES[type] ?? type) : type
+                        const icon     = TYPE_ICONS[type] ?? ''
+                        return (
+                          <div
+                            key={type}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-black"
+                            style={{
+                              background: `${mult.color}18`,
+                              border: `1px solid ${mult.color}45`,
+                              color: mult.color,
+                            }}
+                          >
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: tc }} aria-hidden="true" />
+                            <span>{icon}</span>
+                            <span className="uppercase tracking-wide">{typeName}</span>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )

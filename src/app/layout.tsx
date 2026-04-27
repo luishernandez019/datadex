@@ -1,7 +1,22 @@
 import type { Metadata, Viewport } from 'next'
+import { Press_Start_2P, Nunito } from 'next/font/google'
 import './globals.css'
 import QueryProvider from '@/providers/QueryProvider'
 import Navbar from '@/components/Navbar'
+
+const pressStart2P = Press_Start_2P({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-pixel',
+  display: 'swap',
+})
+
+const nunito = Nunito({
+  weight: ['400', '600', '700', '800', '900'],
+  subsets: ['latin'],
+  variable: '--font-pokemon',
+  display: 'swap',
+})
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
@@ -54,7 +69,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full antialiased" data-scroll-behavior="smooth">
+    <html lang="en" className={`${pressStart2P.variable} ${nunito.variable} h-full antialiased`} data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://pokeapi.co" />
         <link rel="preconnect" href="https://raw.githubusercontent.com" />
@@ -62,19 +77,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
       </head>
       <body className="min-h-full flex flex-col bg-slate-950 text-white">
+        <a href="#main-content" className="skip-link">Skip to main content</a>
         <QueryProvider>
           <Navbar />
-          <main className="flex-1">{children}</main>
-          <footer className="text-center py-4 text-slate-600 text-xs border-t border-slate-800">
-            Data from{' '}
-            <a
-              href="https://pokeapi.co"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-400 hover:text-white transition-colors"
-            >
-              PokéAPI
-            </a>
+          <main id="main-content" className="flex-1">{children}</main>
+          <footer className="text-center py-4 text-slate-500 text-xs border-t border-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-4 px-4">
+            <span>
+              Data from{' '}
+              <a
+                href="https://pokeapi.co"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-white transition-colors underline underline-offset-2 decoration-slate-600 hover:decoration-white"
+              >
+                PokéAPI
+              </a>
+            </span>
+            <span className="hidden sm:inline text-slate-700" aria-hidden="true">·</span>
+            <span>
+              Made by{' '}
+              <a
+                href="https://www.luishernandez.digital"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-white transition-colors underline underline-offset-2 decoration-slate-600 hover:decoration-white"
+              >
+                Luis Hernández
+              </a>
+            </span>
           </footer>
         </QueryProvider>
       </body>

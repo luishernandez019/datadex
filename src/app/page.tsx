@@ -20,7 +20,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen dot-grid">
       {/* Decorative background blobs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-5"
           style={{ background: 'radial-gradient(circle, #ef4444, transparent 70%)' }} />
         <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full opacity-5"
@@ -73,9 +73,9 @@ export default function HomePage() {
           </div>
 
           {/* Divider pokeball */}
-          <div className="flex items-center gap-3 max-w-sm mx-auto opacity-30">
+          <div className="flex items-center gap-3 max-w-sm mx-auto opacity-30" aria-hidden="true">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent to-red-500" />
-            <svg viewBox="0 0 40 40" className="w-5 h-5 flex-shrink-0">
+            <svg viewBox="0 0 40 40" className="w-5 h-5 flex-shrink-0" aria-hidden="true">
               <path d="M 2 20 A 18 18 0 0 1 38 20" fill="#ef4444" />
               <path d="M 2 20 A 18 18 0 0 0 38 20" fill="#f1f5f9" />
               <rect x="2" y="18" width="36" height="4" fill="#0f172a" />
@@ -101,7 +101,7 @@ export default function HomePage() {
 
 function PokeballBg() {
   return (
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" aria-hidden="true">
       <circle cx="100" cy="100" r="98" fill="none" stroke="white" strokeWidth="4" />
       <path d="M 4 100 A 96 96 0 0 1 196 100" fill="white" fillOpacity="0.5" />
       <rect x="4" y="96" width="192" height="8" fill="white" />

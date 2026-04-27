@@ -136,6 +136,9 @@ export interface MoveDetail {
   power: number | null
   accuracy: number | null
   pp: number | null
+  effect_chance: number | null
+  effect_entries: { short_effect: string; language: { name: string } }[]
+  flavor_text_entries: { flavor_text: string; language: { name: string }; version_group: { name: string } }[]
 }
 
 export type SortField = 'id' | 'name' | 'type' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed' | 'total'

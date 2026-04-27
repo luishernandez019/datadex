@@ -4,9 +4,9 @@ import { motion } from 'framer-motion'
 
 export default function LoadingSpinner({ size = 60, text = 'Loading...' }: { size?: number; text?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-5 py-16">
+    <div role="status" className="flex flex-col items-center justify-center gap-5 py-16">
       <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-        style={{ width: size, height: size }}>
+        style={{ width: size, height: size }} aria-hidden="true">
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
           <path d="M 4 50 A 46 46 0 0 1 96 50" fill="#ef4444" />
@@ -19,10 +19,13 @@ export default function LoadingSpinner({ size = 60, text = 'Loading...' }: { siz
         </svg>
       </motion.div>
       {text && (
-        <motion.p className="text-slate-500 text-sm font-semibold"
-          animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.4, repeat: Infinity }}>
-          {text}
-        </motion.p>
+        <>
+          <motion.p className="text-slate-500 text-sm font-semibold" aria-hidden="true"
+            animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.4, repeat: Infinity }}>
+            {text}
+          </motion.p>
+          <span className="sr-only">{text}</span>
+        </>
       )}
     </div>
   )
