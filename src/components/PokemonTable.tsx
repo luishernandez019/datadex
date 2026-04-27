@@ -208,10 +208,11 @@ export default function PokemonTable() {
     <div className="space-y-4">
       {/* ── Filter bar ── */}
       <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-48">
+        <div className="relative flex-1 min-w-48 group">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm select-none">🔍</span>
           <input
-            type="search"
+            type="text"
+            role="searchbox"
             aria-label={t.searchPlaceholder}
             placeholder={t.searchPlaceholder}
             value={searchQuery}
@@ -229,7 +230,7 @@ export default function PokemonTable() {
             <button
               type="button"
               onMouseDown={(e) => { e.preventDefault(); setSearchQuery('') }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors text-sm leading-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-all text-sm leading-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
               aria-label="Clear search"
             >
               ✕

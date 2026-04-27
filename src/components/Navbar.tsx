@@ -171,12 +171,13 @@ function NavSearch() {
 
   return (
     <div ref={containerRef} className="relative w-72 sm:w-80 md:w-96">
-      <div className="relative">
+      <div className="relative group">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-sm pointer-events-none">
           🔍
         </span>
         <input
-          type="search"
+          type="text"
+          role="searchbox"
           aria-label={language === 'es' ? 'Buscar Pokémon por nombre o número' : 'Search Pokémon by name or number'}
           aria-autocomplete="list"
           aria-expanded={open && suggestions.length > 0}
@@ -207,7 +208,7 @@ function NavSearch() {
               setOpen(false)
               setActiveIndex(-1)
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors text-sm leading-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-all text-sm leading-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
             aria-label="Clear search"
           >
             ✕
