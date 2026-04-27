@@ -92,6 +92,7 @@ export interface PokemonSpecies {
   growth_rate: { name: string }
   base_happiness: number
   capture_rate: number
+  varieties: { is_default: boolean; pokemon: { name: string; url: string } }[]
 }
 
 export interface EvolutionDetail {

@@ -7,10 +7,10 @@ import { useEffect, useRef, useState } from 'react'
 import { usePokemonStore, hydrateLanguage } from '@/store/pokemonStore'
 import { usePokemonList } from '@/hooks/usePokemonList'
 import { getSpriteUrl } from '@/lib/api'
-import { GEN_LABELS, T } from '@/lib/translations'
+import { GEN_LABELS } from '@/lib/translations'
 
 export default function Navbar() {
-  const { generationFilter, setGenerationFilter, language, setLanguage } = usePokemonStore()
+  const { generationFilter, setGenerationFilter, language } = usePokemonStore()
   const pathname = usePathname()
   const isDetailPage = pathname.startsWith('/pokemon/')
 
@@ -187,12 +187,28 @@ function NavSearch() {
           onKeyDown={handleKeyDown}
           placeholder={language === 'es' ? 'Buscar Pokémon...' : 'Search Pokémon...'}
           autoComplete="off"
-          className="w-full pl-9 pr-4 py-1.5 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none transition-colors"
+          className="w-full pl-9 py-1.5 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none transition-colors"
           style={{
+            paddingRight: query ? '2.25rem' : '1rem',
             background: 'rgba(30,41,59,0.8)',
             border: `1px solid ${open && suggestions.length > 0 ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}`,
           }}
         />
+        {query && (
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              setQuery('')
+              setOpen(false)
+              setActiveIndex(-1)
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors text-sm leading-none"
+            aria-label="Clear search"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       <AnimatePresence>
@@ -286,7 +302,7 @@ function GenPill({ label, active, onClick, accent }: {
 }) {
   return (
     <motion.button
-      whileHover={{ scale: 1.05 }}
+      whileHover={{ opacity: 0.8 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
       className="px-2.5 py-1 rounded-full text-[10px] font-black whitespace-nowrap transition-all"

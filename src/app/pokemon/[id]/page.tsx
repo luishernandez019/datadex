@@ -23,6 +23,10 @@ const getPokemonMeta = cache(async (id: string) => {
   }
 })
 
+export async function generateStaticParams() {
+  return Array.from({ length: 1302 }, (_, i) => ({ id: String(i + 1) }))
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
   const data = await getPokemonMeta(id)

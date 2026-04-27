@@ -3,8 +3,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ChainLink, EvolutionChainData, TYPE_COLORS } from '@/types/pokemon'
-import { getPokemonIdFromUrl, getOfficialArtworkUrl } from '@/lib/api'
+import { useQueries } from '@tanstack/react-query'
+import { ChainLink, EvolutionChainData } from '@/types/pokemon'
+import { getPokemonIdFromUrl, getOfficialArtworkUrl, fetchPokemonSpecies } from '@/lib/api'
 
 interface Stage {
   id: number
@@ -14,6 +15,36 @@ interface Stage {
   item: string | null
   happiness: boolean
   timeOfDay: string
+}
+
+interface VariantEntry { id: number; label: string }
+
+const VARIANT_KEYWORDS = ['mega', 'gmax', 'alola', 'galar', 'hisui', 'paldea', 'primal']
+
+function isNotableVariant(name: string): boolean {
+  return VARIANT_KEYWORDS.some((kw) => name.includes(kw))
+}
+
+function variantLabel(fullName: string, baseName: string): string {
+  const suffix = fullName.startsWith(baseName + '-')
+    ? fullName.slice(baseName.length + 1)
+    : fullName
+  if (suffix.startsWith('mega')) {
+    const extra = suffix.slice(4).replace(/-/g, ' ').trim()
+    return extra ? `Mega ${extra.toUpperCase()}` : 'Mega'
+  }
+  if (suffix === 'gmax') return 'Gigantamax'
+  if (suffix === 'alola') return 'Alolan'
+  if (suffix === 'galar') return 'Galarian'
+  if (suffix === 'hisui') return 'Hisuian'
+  if (suffix === 'paldea') return 'Paldean'
+  if (suffix === 'primal') return 'Primal'
+  return suffix.replace(/-/g, ' ')
+}
+
+function getChainSpeciesIds(chain: ChainLink): number[] {
+  const id = getPokemonIdFromUrl(chain.species.url)
+  return [id, ...chain.evolves_to.flatMap(getChainSpeciesIds)]
 }
 
 function flattenChain(chain: ChainLink): Stage[][] {
@@ -47,7 +78,6 @@ function triggerLabel(s: Stage): string {
 
 function EvoNode({ stage, currentId }: { stage: Stage; currentId: number }) {
   const isActive = stage.id === currentId
-
   return (
     <Link href={`/pokemon/${stage.id}`}>
       <motion.div
@@ -81,6 +111,58 @@ function EvoNode({ stage, currentId }: { stage: Stage; currentId: number }) {
   )
 }
 
+function VariantNode({ variantId, label, currentId }: { variantId: number; label: string; currentId: number }) {
+  const isActive = variantId === currentId
+  return (
+    <Link href={`/pokemon/${variantId}`}>
+      <motion.div
+        whileHover={{ scale: 1.06, y: -3 }}
+        whileTap={{ scale: 0.95 }}
+        className="flex flex-col items-center gap-1 p-2 rounded-xl cursor-pointer"
+        style={{
+          background: isActive ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.02)',
+          border: isActive ? '2px solid rgba(59,130,246,0.5)' : '2px solid rgba(255,255,255,0.04)',
+          minWidth: 68,
+        }}
+      >
+        <div className="relative w-14 h-14">
+          <Image
+            src={getOfficialArtworkUrl(variantId)}
+            alt={label}
+            fill
+            className="object-contain drop-shadow-md"
+            unoptimized
+          />
+        </div>
+        <p className="text-[9px] text-slate-400 font-semibold capitalize text-center leading-tight">{label}</p>
+      </motion.div>
+    </Link>
+  )
+}
+
+function EvoNodeWithVariants({
+  stage,
+  currentId,
+  variants,
+}: {
+  stage: Stage
+  currentId: number
+  variants: VariantEntry[]
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <EvoNode stage={stage} currentId={currentId} />
+      {variants.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-1.5">
+          {variants.map((v) => (
+            <VariantNode key={v.id} variantId={v.id} label={v.label} currentId={currentId} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Arrow({ stage }: { stage: Stage }) {
   return (
     <div className="flex flex-col items-center gap-1 px-1 flex-shrink-0">
@@ -100,11 +182,43 @@ interface Props { chain: EvolutionChainData; currentPokemonId: number }
 export default function EvolutionChain({ chain, currentPokemonId }: Props) {
   const paths = flattenChain(chain.chain)
 
+  const speciesIds = [...new Set(getChainSpeciesIds(chain.chain))]
+  const speciesResults = useQueries({
+    queries: speciesIds.map((id) => ({
+      queryKey: ['pokemon-species', id],
+      queryFn: () => fetchPokemonSpecies(id),
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      retry: 1,
+    })),
+  })
+
+  const variantsMap: Record<number, VariantEntry[]> = {}
+  speciesIds.forEach((id, i) => {
+    const data = speciesResults[i]?.data
+    if (!data) return
+    variantsMap[id] = data.varieties
+      .filter((v) => !v.is_default && isNotableVariant(v.pokemon.name))
+      .map((v) => ({
+        id: getPokemonIdFromUrl(v.pokemon.url),
+        label: variantLabel(v.pokemon.name, data.name),
+      }))
+  })
+
   if (paths.length === 1 && paths[0].length === 1) {
+    const stage = paths[0][0]
+    const variants = variantsMap[stage.id] ?? []
+    if (variants.length === 0) {
+      return (
+        <p className="text-slate-600 text-sm text-center py-4 italic">
+          This Pokémon does not evolve.
+        </p>
+      )
+    }
     return (
-      <p className="text-slate-600 text-sm text-center py-4 italic">
-        This Pokémon does not evolve.
-      </p>
+      <div className="flex flex-col items-center gap-3">
+        <EvoNodeWithVariants stage={stage} currentId={currentPokemonId} variants={variants} />
+      </div>
     )
   }
 
@@ -115,7 +229,7 @@ export default function EvolutionChain({ chain, currentPokemonId }: Props) {
       <div className="flex items-center justify-center flex-wrap gap-1">
         {path.map((stage, i) => (
           <div key={stage.id} className="flex items-center gap-1">
-            <EvoNode stage={stage} currentId={currentPokemonId} />
+            <EvoNodeWithVariants stage={stage} currentId={currentPokemonId} variants={variantsMap[stage.id] ?? []} />
             {i < path.length - 1 && <Arrow stage={path[i + 1]} />}
           </div>
         ))}
@@ -129,7 +243,7 @@ export default function EvolutionChain({ chain, currentPokemonId }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <EvoNode stage={root} currentId={currentPokemonId} />
+      <EvoNodeWithVariants stage={root} currentId={currentPokemonId} variants={variantsMap[root.id] ?? []} />
 
       <svg width="2" height="24" viewBox="0 0 2 24">
         <line x1="1" y1="0" x2="1" y2="24" stroke="#334155" strokeWidth="1.5" />
@@ -138,10 +252,10 @@ export default function EvolutionChain({ chain, currentPokemonId }: Props) {
       <div className="flex flex-wrap justify-center gap-4">
         {branches.map((branch, bi) => (
           <div key={bi} className="flex items-center gap-1">
-            {branch.map((stage, i) => (
+            {branch.map((stage) => (
               <div key={stage.id} className="flex items-center gap-1">
                 <Arrow stage={stage} />
-                <EvoNode stage={stage} currentId={currentPokemonId} />
+                <EvoNodeWithVariants stage={stage} currentId={currentPokemonId} variants={variantsMap[stage.id] ?? []} />
               </div>
             ))}
           </div>

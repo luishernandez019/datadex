@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
@@ -10,7 +11,7 @@ import { usePokemonList } from '@/hooks/usePokemonList'
 import { usePokemonPageDetails } from '@/hooks/usePokemonDetail'
 import { useAllPokemonStats } from '@/hooks/useAllPokemonStats'
 import { useAllPokemonLoader } from '@/hooks/useAllPokemonLoader'
-import { getSpriteUrl } from '@/lib/api'
+import { getSpriteUrl, fetchPokemonSpecies } from '@/lib/api'
 import TypeBadge from './TypeBadge'
 import Pagination from './Pagination'
 import LoadingSpinner from './LoadingSpinner'
@@ -87,6 +88,7 @@ export default function PokemonTable() {
 
   const pokemonCache = usePokemonCacheStore((s) => s.pokemonCache)
   const statsCache   = usePokemonCacheStore((s) => s.statsCache)
+  const queryClient  = useQueryClient()
 
   const t = T[language]
   const router = useRouter()
@@ -172,7 +174,7 @@ export default function PokemonTable() {
   const allIds = useMemo(() => allPokemon?.map((p) => p.id) ?? [], [allPokemon])
 
   // Primary: single-request pre-built JSON (generated at build time)
-  const { hasPrebuilt, isLoading: statsJsonLoading, isDone: statsJsonDone } =
+  const { hasPrebuilt, isDone: statsJsonDone } =
     useAllPokemonStats(loadAllStats)
 
   // Fallback: chunk loader (used in dev when pokemon-stats.json doesn't exist)
@@ -213,26 +215,43 @@ export default function PokemonTable() {
             placeholder={t.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
-            style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(255,255,255,0.07)' }}
+            className="w-full pl-9 py-2.5 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
+            style={{
+              paddingRight: searchQuery ? '2.25rem' : '1rem',
+              background: 'rgba(30,41,59,0.8)',
+              border: '1px solid rgba(255,255,255,0.07)',
+            }}
             onFocus={(e) => (e.target.style.borderColor = 'rgba(239,68,68,0.5)')}
-            onBlur={(e)  => (e.target.style.borderColor = 'rgba(255,255,255,0.07)')}
+            onBlur={(e)  => (e.target.style.borderColor = searchQuery ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.07)')}
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); setSearchQuery('') }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors text-sm leading-none"
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
-        <select
-          value={typeFilter}
-          onChange={(e) => handleTypeFilter(e.target.value)}
-          className="px-4 py-2.5 rounded-xl text-sm text-white focus:outline-none cursor-pointer capitalize"
-          style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(255,255,255,0.07)' }}
-        >
-          <option value="">{t.allTypes}</option>
-          {POKEMON_TYPES.map((tp) => (
-            <option key={tp} value={tp} className="capitalize bg-slate-900">
-              {language === 'es' ? TYPE_NAMES_ES[tp] ?? tp : tp.charAt(0).toUpperCase() + tp.slice(1)}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            value={typeFilter}
+            onChange={(e) => handleTypeFilter(e.target.value)}
+            className="px-4 pr-10 py-2.5 rounded-xl text-sm text-white focus:outline-none cursor-pointer capitalize appearance-none w-full"
+            style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(255,255,255,0.07)' }}
+          >
+            <option value="">{t.allTypes}</option>
+            {POKEMON_TYPES.map((tp) => (
+              <option key={tp} value={tp} className="capitalize bg-slate-900">
+                {language === 'es' ? TYPE_NAMES_ES[tp] ?? tp : tp.charAt(0).toUpperCase() + tp.slice(1)}
+              </option>
+            ))}
+          </select>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none select-none">▼</span>
+        </div>
 
         <span className="text-slate-600 text-sm tabular-nums">
           <span className="text-slate-300 font-bold">{filtered.length}</span> Pokémon
@@ -319,6 +338,12 @@ export default function PokemonTable() {
                           const el = e.currentTarget as HTMLElement
                           el.style.background = `${accent}12`
                           el.style.borderLeft = `3px solid ${accent}88`
+                          router.prefetch(`/pokemon/${entry.id}`)
+                          queryClient.prefetchQuery({
+                            queryKey: ['pokemon-species', entry.id],
+                            queryFn: () => fetchPokemonSpecies(entry.id),
+                            staleTime: Infinity,
+                          })
                         }}
                         onMouseLeave={(e) => {
                           const el = e.currentTarget as HTMLElement
@@ -335,6 +360,8 @@ export default function PokemonTable() {
                               alt={entry.name}
                               width={48}
                               height={48}
+                              priority={idx === 0}
+                              loading={idx < 3 ? 'eager' : 'lazy'}
                               className="object-contain w-12 h-12 group-hover:scale-110 transition-transform duration-300"
                               style={{ imageRendering: 'pixelated' }}
                             />

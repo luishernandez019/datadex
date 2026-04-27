@@ -126,18 +126,23 @@ export default function TypeMatchup({ types, typeColor }: Props) {
                     className="flex items-center rounded-lg overflow-hidden text-xs font-black"
                     style={{ border: `1px solid ${mult.color}55` }}
                   >
-                    {/* Type half */}
+                    {/* Type half — uses effectiveness color so weakness/resistance is obvious */}
                     <div
                       className="flex items-center gap-1.5 px-3 py-1.5"
-                      style={{ background: `${typeColor}25`, color: typeColor }}
+                      style={{ background: `${mult.color}20`, color: mult.color }}
                     >
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ background: typeColor }}
+                        title={type}
+                      />
                       <span>{icon}</span>
                       <span className="uppercase tracking-wide">{typeName}</span>
                     </div>
                     {/* Multiplier half */}
                     <div
                       className="px-2.5 py-1.5 tabular-nums"
-                      style={{ background: `${mult.color}28`, color: mult.color }}
+                      style={{ background: `${mult.color}35`, color: mult.color }}
                     >
                       {mult.label}
                     </div>

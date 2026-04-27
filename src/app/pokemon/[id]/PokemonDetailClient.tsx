@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -28,6 +28,7 @@ const STAT_ORDER = ['hp', 'attack', 'defense', 'special-attack', 'special-defens
 export default function PokemonDetailClient({ params }: Props) {
   const { id } = use(params)
   const [showShiny, setShowShiny] = useState(false)
+  const [shinyAnimation, setShinyAnimation] = useState(false)
   const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'abilities'>('stats')
   const [moveSearch, setMoveSearch] = useState('')
 
@@ -164,20 +165,49 @@ export default function PokemonDetailClient({ params }: Props) {
             <div className="relative flex-shrink-0 self-center lg:self-end">
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-52 h-12 rounded-full blur-2xl opacity-40"
                 style={{ background: typeColor }} />
+
+              <ShinySparkles active={shinyAnimation} />
+
               <motion.div animate={{ y: [0, -16, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
-                <Image
-                  src={artworkUrl}
-                  alt={`${pokemon.name.replace(/-/g, ' ')} official artwork`}
-                  width={300}
-                  height={300}
-                  className="object-contain drop-shadow-2xl"
-                  style={{ filter: `drop-shadow(0 20px 40px ${typeColor}55)` }}
-                  priority
-                />
+                <motion.div
+                  className="relative"
+                  animate={shinyAnimation ? { scale: [1, 1.09, 0.96, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.45, ease: 'easeOut' }}
+                >
+                  <AnimatePresence>
+                    {shinyAnimation && (
+                      <motion.div
+                        className="absolute inset-0 pointer-events-none z-10"
+                        style={{ borderRadius: '50%', background: 'radial-gradient(circle, rgba(253,224,71,0.65) 0%, transparent 65%)' }}
+                        initial={{ opacity: 0, scale: 0.4 }}
+                        animate={{ opacity: [0, 1, 0], scale: [0.4, 1.3, 2] }}
+                        exit={{}}
+                        transition={{ duration: 0.55, ease: 'easeOut' }}
+                      />
+                    )}
+                  </AnimatePresence>
+                  <Image
+                    src={artworkUrl}
+                    alt={`${pokemon.name.replace(/-/g, ' ')} official artwork`}
+                    width={300}
+                    height={300}
+                    className="object-contain drop-shadow-2xl"
+                    style={{ filter: `drop-shadow(0 20px 40px ${typeColor}55)` }}
+                    priority
+                  />
+                </motion.div>
               </motion.div>
+
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                onClick={() => setShowShiny(!showShiny)}
+                onClick={() => {
+                  const next = !showShiny
+                  setShowShiny(next)
+                  if (next) {
+                    setShinyAnimation(true)
+                    setTimeout(() => setShinyAnimation(false), 1400)
+                  }
+                }}
                 className="absolute bottom-4 right-0 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-all"
                 style={showShiny
                   ? { background: 'rgba(250,204,21,0.2)', border: '1px solid rgba(250,204,21,0.5)', color: '#fde047' }
@@ -392,5 +422,67 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
       style={{ background: `${color}20`, border: `1px solid ${color}44`, color }}>
       {children}
     </span>
+  )
+}
+
+const SPARKLE_POSITIONS = [
+  { x: 140,  y: 0,    delay: 0,    size: 22 },
+  { x: 99,   y: 99,   delay: 0.07, size: 16 },
+  { x: 0,    y: 140,  delay: 0.12, size: 20 },
+  { x: -99,  y: 99,   delay: 0.05, size: 14 },
+  { x: -140, y: 0,    delay: 0.10, size: 24 },
+  { x: -99,  y: -99,  delay: 0.14, size: 18 },
+  { x: 0,    y: -140, delay: 0.03, size: 20 },
+  { x: 99,   y: -99,  delay: 0.09, size: 16 },
+  { x: 129,  y: 53,   delay: 0.06, size: 12 },
+  { x: -53,  y: 129,  delay: 0.16, size: 14 },
+  { x: -129, y: -53,  delay: 0.11, size: 12 },
+  { x: 53,   y: -129, delay: 0.04, size: 15 },
+]
+
+function StarIcon({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24">
+      <path
+        d="M12 1 L13.5 10.5 L23 12 L13.5 13.5 L12 23 L10.5 13.5 L1 12 L10.5 10.5 Z"
+        fill="#fde047"
+        stroke="#fbbf24"
+        strokeWidth="0.3"
+      />
+    </svg>
+  )
+}
+
+function ShinySparkles({ active }: { active: boolean }) {
+  return (
+    <AnimatePresence>
+      {active && SPARKLE_POSITIONS.map((s, i) => (
+        <motion.div
+          key={i}
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: s.size,
+            height: s.size,
+            marginLeft: -s.size / 2,
+            marginTop: -s.size / 2,
+            pointerEvents: 'none',
+            zIndex: 20,
+          }}
+          initial={{ scale: 0, opacity: 0, x: s.x * 0.4, y: s.y * 0.4 }}
+          animate={{
+            scale: [0, 1.4, 1, 0],
+            opacity: [0, 1, 0.8, 0],
+            x: [s.x * 0.4, s.x, s.x * 1.15],
+            y: [s.y * 0.4, s.y, s.y * 1.15],
+          }}
+          exit={{}}
+          transition={{ duration: 0.9, delay: s.delay, ease: 'easeOut' }}
+        >
+          <StarIcon size={s.size} />
+        </motion.div>
+      ))}
+    </AnimatePresence>
   )
 }
