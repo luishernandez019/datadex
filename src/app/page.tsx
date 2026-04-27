@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import PokemonTable from '@/components/PokemonTable'
 import { usePokemonStore } from '@/store/pokemonStore'
 import { T, TYPE_NAMES_ES } from '@/lib/translations'
@@ -25,7 +24,6 @@ export default function HomePage() {
           style={{ background: 'radial-gradient(circle, #ef4444, transparent 70%)' }} />
         <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full opacity-5"
           style={{ background: 'radial-gradient(circle, #3b82f6, transparent 70%)' }} />
-        {/* Large pokeball watermark */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-[0.015] pokeball-spin">
           <PokeballBg />
         </div>
@@ -33,21 +31,14 @@ export default function HomePage() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-10">
         {/* Hero */}
-        <motion.div
-          initial={{ opacity: 0, y: -24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="text-center mb-10"
-        >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1, duration: 0.5, type: 'spring' }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-bold mb-5 tracking-wider uppercase"
+        <div className="text-center mb-10 animate-fade-in">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-bold mb-5 tracking-wider uppercase animate-scale-in"
+            style={{ animationDelay: '100ms' }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
             1,302 Pokémon
-          </motion.div>
+          </div>
 
           <h1 className="font-pixel text-3xl sm:text-4xl md:text-5xl mb-4 leading-tight">
             <span style={{ color: '#ef4444', textShadow: '0 0 40px rgba(239,68,68,0.4)' }}>DATA</span>
@@ -84,16 +75,12 @@ export default function HomePage() {
             </svg>
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-red-500" />
           </div>
-        </motion.div>
+        </div>
 
         {/* Table */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
+        <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
           <PokemonTable />
-        </motion.div>
+        </div>
       </div>
     </div>
   )

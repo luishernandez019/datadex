@@ -29,12 +29,12 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 grid items-center gap-4"
           style={{ gridTemplateColumns: '1fr auto 1fr' }}>
           {/* Left: logo */}
-          <Link href="/" className="flex items-center gap-2.5 group justify-self-start flex-shrink-0"
+          <Link href="/" aria-label="Datadex home"
+            className="flex items-center gap-2.5 group justify-self-start flex-shrink-0"
             onClick={() => setGenerationFilter(null)}>
-            <motion.div className="w-9 h-9" whileHover={{ rotate: 180 }}
-              transition={{ duration: 0.5, ease: 'easeInOut' }}>
+            <div className="w-9 h-9 transition-transform duration-500 ease-in-out group-hover:rotate-180">
               <PokeballSVG />
-            </motion.div>
+            </div>
             <span className="font-pixel text-[11px] text-red-400 hidden sm:block tracking-wide">DATADEX</span>
           </Link>
 
@@ -50,12 +50,12 @@ export default function Navbar() {
       ) : (
         /* Home page — flex with gen pills */
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0"
+          <Link href="/" aria-label="Datadex home"
+            className="flex items-center gap-2.5 group flex-shrink-0"
             onClick={() => setGenerationFilter(null)}>
-            <motion.div className="w-9 h-9" whileHover={{ rotate: 180 }}
-              transition={{ duration: 0.5, ease: 'easeInOut' }}>
+            <div className="w-9 h-9 transition-transform duration-500 ease-in-out group-hover:rotate-180">
               <PokeballSVG />
-            </motion.div>
+            </div>
             <span className="font-pixel text-[11px] text-red-400 hidden sm:block tracking-wide">DATADEX</span>
           </Link>
 
@@ -291,20 +291,19 @@ function LangToggle() {
   return (
     <>
       {(['en', 'es'] as const).map((lang) => (
-        <motion.button
+        <button
           key={lang}
-          whileTap={{ scale: 0.92 }}
           onClick={() => setLanguage(lang)}
           aria-label={labels[lang]}
           aria-pressed={language === lang}
-          className="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all"
+          className="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all active:scale-95"
           style={language === lang
             ? { background: '#dc2626', color: '#fff', cursor: 'pointer' }
             : { color: '#94a3b8', cursor: 'pointer' }
           }
         >
           {lang}
-        </motion.button>
+        </button>
       ))}
     </>
   )
@@ -314,19 +313,17 @@ function GenPill({ label, active, onClick, accent }: {
   label: string; active: boolean; onClick: () => void; accent: string
 }) {
   return (
-    <motion.button
-      whileHover={{ opacity: 0.8 }}
-      whileTap={{ scale: 0.95 }}
+    <button
       onClick={onClick}
       aria-pressed={active}
-      className="px-2.5 py-1 rounded-full text-[10px] font-black whitespace-nowrap transition-all"
+      className="px-2.5 py-1 rounded-full text-[10px] font-black whitespace-nowrap transition-all hover:opacity-80 active:scale-95"
       style={active
         ? { background: accent, color: '#fff', boxShadow: `0 0 12px ${accent}55`, cursor: 'pointer' }
         : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', cursor: 'pointer' }
       }
     >
       {label}
-    </motion.button>
+    </button>
   )
 }
 

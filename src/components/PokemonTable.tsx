@@ -256,7 +256,7 @@ export default function PokemonTable() {
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none select-none" aria-hidden="true">▼</span>
         </div>
 
-        <span className="text-slate-600 text-sm tabular-nums">
+        <span className="text-slate-400 text-sm tabular-nums">
           <span className="text-slate-300 font-bold">{filtered.length}</span> Pokémon
         </span>
       </div>
@@ -312,7 +312,7 @@ export default function PokemonTable() {
                 <th key={col.key} scope="col" onClick={() => handleSort(col.key)}
                   aria-sort={sortField === col.key ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
                   className="px-3 py-4 text-left text-[10px] uppercase tracking-widest font-bold cursor-pointer hover:text-slate-200 select-none transition-colors whitespace-nowrap"
-                  style={{ color: sortField === col.key ? '#f87171' : '#475569' }}
+                  style={{ color: sortField === col.key ? '#f87171' : '#94a3b8' }}
                 >
                   {col.label}
                   <SortBtn field={col.key} active={sortField} order={sortOrder} />
@@ -373,7 +373,7 @@ export default function PokemonTable() {
 
                         {/* ID */}
                         <td className="px-3 py-2">
-                          <span className="font-pixel text-[9px] text-slate-600 tabular-nums">
+                          <span className="font-pixel text-[9px] text-slate-400 tabular-nums">
                             {String(entry.id).padStart(3, '0')}
                           </span>
                         </td>
