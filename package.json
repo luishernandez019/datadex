@@ -1,5 +1,5 @@
 {
-  "name": "pokemon-pokedex",
+  "name": "datadex",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,6 +17,12 @@
     "react-dom": "19.2.4",
     "zustand": "^5.0.12"
   },
+  "browserslist": [
+    "chrome >= 87",
+    "firefox >= 78",
+    "safari >= 14",
+    "edge >= 88"
+  ],
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

@@ -70,12 +70,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${pressStart2P.variable} ${nunito.variable} h-full antialiased`} data-scroll-behavior="smooth">
-      <head>
-        <link rel="preconnect" href="https://pokeapi.co" />
-        <link rel="preconnect" href="https://raw.githubusercontent.com" />
-        <link rel="dns-prefetch" href="https://pokeapi.co" />
-        <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
-      </head>
+      <head />
       <body className="min-h-full flex flex-col bg-slate-950 text-white">
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <QueryProvider>

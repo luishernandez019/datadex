@@ -1,6 +1,10 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ['framer-motion', '@tanstack/react-query'],
+  },
+
   images: {
     remotePatterns: [
       {
@@ -37,6 +41,13 @@ const nextConfig: NextConfig = {
         source: '/(sitemap\\.xml|robots\\.txt)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=3600' },
+        ],
+      },
+      {
+        // 7-day cache for web manifest (avoids 491ms network chain delay)
+        source: '/manifest.webmanifest',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },
         ],
       },
     ]

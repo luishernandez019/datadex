@@ -271,8 +271,7 @@ export default function PokemonTable() {
             className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm"
             style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)' }}
           >
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-              className="w-4 h-4 rounded-full border-2 border-indigo-400 border-t-transparent flex-shrink-0" />
+            <div className="w-4 h-4 rounded-full border-2 border-indigo-400 border-t-transparent flex-shrink-0 animate-spin" />
 
             {showChunkBar ? (
               <>
@@ -280,9 +279,8 @@ export default function PokemonTable() {
                   {t.loadingStats(chunkLoaded, chunkTotal)}
                 </span>
                 <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(99,102,241,0.2)' }}>
-                  <motion.div className="h-full rounded-full bg-indigo-400"
-                    animate={{ width: `${((chunkLoaded / chunkTotal) * 100).toFixed(1)}%` }}
-                    transition={{ duration: 0.3 }}
+                  <div className="h-full rounded-full bg-indigo-400 transition-[width] duration-300"
+                    style={{ width: `${((chunkLoaded / chunkTotal) * 100).toFixed(1)}%` }}
                   />
                 </div>
                 <span className="text-indigo-500 text-xs tabular-nums flex-shrink-0">
@@ -326,7 +324,6 @@ export default function PokemonTable() {
             </tr>
           </thead>
           <tbody>
-            <AnimatePresence>
               {isPageLoading
                 ? Array.from({ length: itemsPerPage }).map((_, i) => <SkeletonRow key={i} />)
                 : pageItems.map((entry, idx) => {
@@ -335,14 +332,11 @@ export default function PokemonTable() {
                     const total       = displayData ? getTotal(displayData) : null
 
                     return (
-                      <motion.tr
+                      <tr
                         key={entry.id}
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.18, delay: idx * 0.025 }}
                         onClick={() => router.push(`/pokemon/${entry.id}`)}
-                        className="group cursor-pointer transition-all duration-150"
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                        className="group cursor-pointer transition-all duration-150 animate-fade-in"
+                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', animationDelay: `${idx * 20}ms` }}
                         onMouseEnter={(e) => {
                           const el = e.currentTarget as HTMLElement
                           el.style.background = `${accent}12`
@@ -420,10 +414,9 @@ export default function PokemonTable() {
                             </td>
                           ))
                         )}
-                      </motion.tr>
+                      </tr>
                     )
                   })}
-            </AnimatePresence>
           </tbody>
         </table>
       </div>
