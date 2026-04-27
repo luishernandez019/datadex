@@ -301,7 +301,7 @@ export default function PokemonDetailClient({ params }: Props) {
                 className="px-5 py-2 rounded-xl font-bold text-sm cursor-pointer transition-all"
                 style={active
                   ? { background: typeColor, color: '#fff', boxShadow: `0 4px 20px ${typeColor}55` }
-                  : { color: '#64748b' }
+                  : { color: '#94a3b8' }
                 }>
                 {tab.icon} {tab.label}
               </motion.button>

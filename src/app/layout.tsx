@@ -76,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <QueryProvider>
           <Navbar />
           <main id="main-content" className="flex-1">{children}</main>
-          <footer className="text-center py-4 text-slate-500 text-xs border-t border-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-4 px-4">
+          <footer className="text-center py-4 text-slate-400 text-xs border-t border-slate-800 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-4 px-4">
             <span>
               Data from{' '}
               <a
