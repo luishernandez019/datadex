@@ -1,13 +1,14 @@
 'use client'
 
-import { use, useRef, useState } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { usePokemonDetail } from '@/hooks/usePokemonDetail'
 import { usePokemonSpecies, useEvolutionChainById } from '@/hooks/usePokemonSpecies'
 import { useMoveTranslations } from '@/hooks/useMoveTranslations'
-import { getEvolutionChainIdFromUrl, getOfficialArtworkUrl, getShinyArtworkUrl } from '@/lib/api'
+import { getEvolutionChainIdFromUrl, getOfficialArtworkUrl, getShinyArtworkUrl, fetchMoveDetail } from '@/lib/api'
 import { usePokemonStore } from '@/store/pokemonStore'
 import TypeBadge from '@/components/TypeBadge'
 import StatBar from '@/components/StatBar'
@@ -17,6 +18,7 @@ import PokemonComparison from '@/components/PokemonComparison'
 import TypeMatchup from '@/components/TypeMatchup'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { TYPE_COLORS } from '@/types/pokemon'
+import type { MoveDetail } from '@/types/pokemon'
 import { T } from '@/lib/translations'
 
 interface Props {
@@ -31,6 +33,7 @@ export default function PokemonDetailClient({ params }: Props) {
   const [shinyAnimation, setShinyAnimation] = useState(false)
   const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'abilities'>('stats')
   const [moveSearch, setMoveSearch] = useState('')
+  const [selectedMove, setSelectedMove] = useState<string | null>(null)
 
   const language = usePokemonStore((s) => s.language)
   const t = T[language]
@@ -59,6 +62,17 @@ export default function PokemonDetailClient({ params }: Props) {
     : levelMoves.map((m) => m.move.name)
 
   const moveNames = useMoveTranslations(moveSlugsToTranslate, language)
+
+  useEffect(() => { setSelectedMove(null) }, [activeTab, moveSearch])
+
+  const { data: moveDetail, isLoading: moveDetailLoading } = useQuery({
+    queryKey: ['move', selectedMove],
+    queryFn: () => fetchMoveDetail(selectedMove!),
+    enabled: !!selectedMove,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: 1,
+  })
 
   if (isLoading) {
     return (
@@ -349,6 +363,21 @@ export default function PokemonDetailClient({ params }: Props) {
                   />
                 </div>
 
+                {/* Move detail popup */}
+                <AnimatePresence>
+                  {selectedMove && (
+                    <MoveDetailCard
+                      slug={selectedMove}
+                      displayName={moveNames.get(selectedMove) ?? selectedMove.replace(/-/g, ' ')}
+                      detail={moveDetail}
+                      isLoading={moveDetailLoading}
+                      onClose={() => setSelectedMove(null)}
+                      language={language}
+                      typeColor={typeColor}
+                    />
+                  )}
+                </AnimatePresence>
+
                 {!moveSearch ? (
                   <div>
                     <p className="text-slate-600 text-xs uppercase tracking-widest mb-3 font-bold">{t.learnedByLevelUp}</p>
@@ -356,13 +385,18 @@ export default function PokemonDetailClient({ params }: Props) {
                       {levelMoves.map((m, i) => {
                         const lvl = m.version_group_details.find((d) => d.move_learn_method.name === 'level-up')?.level_learned_at ?? 0
                         const displayName = moveNames.get(m.move.name) ?? m.move.name.replace(/-/g, ' ')
+                        const isSelected = selectedMove === m.move.name
                         return (
                           <motion.div key={m.move.name}
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                             transition={{ delay: Math.min(i * 0.015, 0.5) }}
-                            className="flex items-center justify-between px-3 py-2 rounded-xl"
-                            style={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                            <span className="text-white text-xs font-semibold capitalize truncate mr-2">
+                            onClick={() => setSelectedMove(isSelected ? null : m.move.name)}
+                            className="flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-colors"
+                            style={{
+                              background: isSelected ? `${typeColor}18` : 'rgba(15,23,42,0.9)',
+                              border: isSelected ? `1px solid ${typeColor}55` : '1px solid rgba(255,255,255,0.06)',
+                            }}>
+                            <span className={`text-xs font-semibold capitalize truncate mr-2 ${isSelected ? 'text-white' : 'text-slate-300'}`}>
                               {displayName}
                             </span>
                             <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full whitespace-nowrap"
@@ -376,14 +410,22 @@ export default function PokemonDetailClient({ params }: Props) {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {filteredMoves.map((m) => (
-                      <div key={m.move.name} className="px-3 py-2 rounded-xl"
-                        style={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <span className="text-white text-xs capitalize">
-                          {moveNames.get(m.move.name) ?? m.move.name.replace(/-/g, ' ')}
-                        </span>
-                      </div>
-                    ))}
+                    {filteredMoves.map((m) => {
+                      const isSelected = selectedMove === m.move.name
+                      return (
+                        <div key={m.move.name}
+                          onClick={() => setSelectedMove(isSelected ? null : m.move.name)}
+                          className="px-3 py-2 rounded-xl cursor-pointer transition-colors"
+                          style={{
+                            background: isSelected ? `${typeColor}18` : 'rgba(15,23,42,0.9)',
+                            border: isSelected ? `1px solid ${typeColor}55` : '1px solid rgba(255,255,255,0.06)',
+                          }}>
+                          <span className={`text-xs capitalize ${isSelected ? 'text-white font-semibold' : 'text-slate-300'}`}>
+                            {moveNames.get(m.move.name) ?? m.move.name.replace(/-/g, ' ')}
+                          </span>
+                        </div>
+                      )
+                    })}
                     {filteredMoves.length === 0 && (
                       <p className="col-span-full text-center text-slate-600 py-8">
                         {language === 'es' ? 'No se encontraron movimientos.' : 'No moves found.'}
@@ -420,6 +462,104 @@ export default function PokemonDetailClient({ params }: Props) {
         <PokemonComparison pokemon={pokemon} typeColor={typeColor} />
       </div>
     </div>
+  )
+}
+
+function MoveDetailCard({
+  slug, displayName, detail, isLoading, onClose, language, typeColor,
+}: {
+  slug: string
+  displayName: string
+  detail: MoveDetail | undefined
+  isLoading: boolean
+  onClose: () => void
+  language: string
+  typeColor: string
+}) {
+  const moveTypeColor = detail ? (TYPE_COLORS[detail.type.name] ?? '#A8A878') : typeColor
+
+  const description = (() => {
+    if (!detail) return ''
+    const lang = language === 'es' ? 'es' : 'en'
+    const flavor =
+      detail.flavor_text_entries.filter((e) => e.language.name === lang).at(-1)?.flavor_text ??
+      detail.flavor_text_entries.filter((e) => e.language.name === 'en').at(-1)?.flavor_text
+    const shortFx =
+      detail.effect_entries.find((e) => e.language.name === lang)?.short_effect ??
+      detail.effect_entries.find((e) => e.language.name === 'en')?.short_effect
+    return (flavor ?? shortFx ?? '')
+      .replace(/\f|\n/g, ' ')
+      .replace(/\$effect_chance/g, String(detail.effect_chance ?? ''))
+  })()
+
+  const dcLabel: Record<string, string> = {
+    physical: language === 'es' ? 'Físico' : 'Physical',
+    special:  language === 'es' ? 'Especial' : 'Special',
+    status:   language === 'es' ? 'Estado' : 'Status',
+  }
+
+  const stats = detail ? [
+    { label: language === 'es' ? 'Poder'     : 'Power',    value: detail.power    ?? '—' },
+    { label: language === 'es' ? 'Precisión' : 'Accuracy', value: detail.accuracy != null ? `${detail.accuracy}%` : '—' },
+    { label: 'PP',                                          value: detail.pp       ?? '—' },
+  ] : []
+
+  return (
+    <motion.div
+      key={slug}
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.18 }}
+      className="rounded-2xl p-4"
+      style={{ background: `${moveTypeColor}0e`, border: `1px solid ${moveTypeColor}40` }}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-white font-black text-sm capitalize">{displayName}</span>
+          {detail && (
+            <>
+              <TypeBadge type={detail.type.name} size="sm" />
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold capitalize"
+                style={{ background: 'rgba(255,255,255,0.07)', color: '#94a3b8' }}>
+                {dcLabel[detail.damage_class.name] ?? detail.damage_class.name}
+              </span>
+            </>
+          )}
+        </div>
+        <button onClick={onClose} aria-label="Close move detail"
+          className="text-slate-500 hover:text-white transition-colors leading-none flex-shrink-0 text-base">
+          ✕
+        </button>
+      </div>
+
+      {isLoading && (
+        <p className="text-slate-500 text-xs">{language === 'es' ? 'Cargando...' : 'Loading...'}</p>
+      )}
+
+      {detail && (
+        <>
+          {/* Power / Accuracy / PP */}
+          {stats.some((s) => s.value !== '—') && (
+            <div className="flex gap-2 mb-3">
+              {stats.map(({ label, value }) => (
+                <div key={label} className="text-center px-3 py-1.5 rounded-lg"
+                  style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  <p className="text-[9px] text-slate-500 uppercase tracking-wide mb-0.5">{label}</p>
+                  <p className="text-white font-black text-sm tabular-nums">{value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Description */}
+          {description && (
+            <p className="text-slate-300 text-xs leading-relaxed">{description}</p>
+          )}
+        </>
+      )}
+    </motion.div>
   )
 }
 
