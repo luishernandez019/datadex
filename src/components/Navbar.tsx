@@ -13,6 +13,7 @@ export default function Navbar() {
   const { generationFilter, setGenerationFilter, language } = usePokemonStore()
   const pathname = usePathname()
   const isDetailPage = pathname.startsWith('/pokemon/')
+  const isTeamPage = pathname === '/team'
 
   useEffect(() => { hydrateLanguage() }, [])
 
@@ -41,10 +42,35 @@ export default function Navbar() {
           {/* Center: search */}
           <NavSearch />
 
-          {/* Right: language toggle */}
-          <div className="justify-self-end flex items-center gap-1 p-1 rounded-lg flex-shrink-0"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <LangToggle />
+          {/* Right: team link + language toggle */}
+          <div className="justify-self-end flex items-center gap-2 flex-shrink-0">
+            <TeamLink language={language} isActive={isTeamPage} />
+            <div className="flex items-center gap-1 p-1 rounded-lg"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <LangToggle />
+            </div>
+          </div>
+        </div>
+      ) : isTeamPage ? (
+        /* Team page — logo + title + lang toggle */
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-4">
+          <Link href="/" aria-label="Datadex home"
+            className="flex items-center gap-2.5 group flex-shrink-0"
+            onClick={() => setGenerationFilter(null)}>
+            <div className="w-9 h-9 transition-transform duration-500 ease-in-out group-hover:rotate-180">
+              <PokeballSVG />
+            </div>
+            <span className="font-pixel text-[11px] text-red-400 hidden sm:block tracking-wide">DATADEX</span>
+          </Link>
+
+          <div className="flex-1" />
+
+          <div className="flex-shrink-0 flex items-center gap-2">
+            <TeamLink language={language} isActive={isTeamPage} />
+            <div className="flex items-center gap-1 p-1 rounded-lg"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <LangToggle />
+            </div>
           </div>
         </div>
       ) : (
@@ -79,9 +105,12 @@ export default function Navbar() {
             </div>
           </nav>
 
-          <div className="flex-shrink-0 flex items-center gap-1 p-1 rounded-lg"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <LangToggle />
+          <div className="flex-shrink-0 flex items-center gap-2">
+            <TeamLink language={language} isActive={isTeamPage} />
+            <div className="flex items-center gap-1 p-1 rounded-lg"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <LangToggle />
+            </div>
           </div>
         </div>
       )}
@@ -306,6 +335,25 @@ function LangToggle() {
         </button>
       ))}
     </>
+  )
+}
+
+function TeamLink({ language, isActive }: { language: string; isActive: boolean }) {
+  return (
+    <Link
+      href="/team"
+      aria-label={language === 'es' ? 'Abrir Team Builder' : 'Open Team Builder'}
+      aria-current={isActive ? 'page' : undefined}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all hover:opacity-90 active:scale-95"
+      style={
+        isActive
+          ? { background: '#6366f1', color: '#fff', boxShadow: '0 0 12px rgba(99,102,241,0.4)' }
+          : { background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.25)' }
+      }
+    >
+      <span aria-hidden="true">⚔️</span>
+      <span className="hidden sm:inline">{language === 'es' ? 'Equipo' : 'Team'}</span>
+    </Link>
   )
 }
 
