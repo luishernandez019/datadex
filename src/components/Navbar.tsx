@@ -14,6 +14,8 @@ export default function Navbar() {
   const pathname = usePathname()
   const isDetailPage = pathname.startsWith('/pokemon/')
   const isTeamPage = pathname === '/team'
+  const isNaturesPage = pathname === '/natures'
+  const isSubPage = isTeamPage || isNaturesPage
 
   useEffect(() => { hydrateLanguage() }, [])
 
@@ -42,8 +44,9 @@ export default function Navbar() {
           {/* Center: search */}
           <NavSearch />
 
-          {/* Right: team link + language toggle */}
+          {/* Right: nav links + language toggle */}
           <div className="justify-self-end flex items-center gap-2 flex-shrink-0">
+            <NaturesLink language={language} isActive={isNaturesPage} />
             <TeamLink language={language} isActive={isTeamPage} />
             <div className="flex items-center gap-1 p-1 rounded-lg"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -51,8 +54,8 @@ export default function Navbar() {
             </div>
           </div>
         </div>
-      ) : isTeamPage ? (
-        /* Team page — logo + title + lang toggle */
+      ) : isSubPage ? (
+        /* Sub page (team / natures) — logo + spacer + nav links + lang toggle */
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-4">
           <Link href="/" aria-label="Datadex home"
             className="flex items-center gap-2.5 group flex-shrink-0"
@@ -66,6 +69,7 @@ export default function Navbar() {
           <div className="flex-1" />
 
           <div className="flex-shrink-0 flex items-center gap-2">
+            <NaturesLink language={language} isActive={isNaturesPage} />
             <TeamLink language={language} isActive={isTeamPage} />
             <div className="flex items-center gap-1 p-1 rounded-lg"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -106,6 +110,7 @@ export default function Navbar() {
           </nav>
 
           <div className="flex-shrink-0 flex items-center gap-2">
+            <NaturesLink language={language} isActive={isNaturesPage} />
             <TeamLink language={language} isActive={isTeamPage} />
             <div className="flex items-center gap-1 p-1 rounded-lg"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -353,6 +358,25 @@ function TeamLink({ language, isActive }: { language: string; isActive: boolean 
     >
       <span aria-hidden="true">⚔️</span>
       <span className="hidden sm:inline">{language === 'es' ? 'Equipo' : 'Team'}</span>
+    </Link>
+  )
+}
+
+function NaturesLink({ language, isActive }: { language: string; isActive: boolean }) {
+  return (
+    <Link
+      href="/natures"
+      aria-label={language === 'es' ? 'Ver naturalezas' : 'View natures'}
+      aria-current={isActive ? 'page' : undefined}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all hover:opacity-90 active:scale-95"
+      style={
+        isActive
+          ? { background: '#ec4899', color: '#fff', boxShadow: '0 0 12px rgba(236,72,153,0.4)' }
+          : { background: 'rgba(236,72,153,0.12)', color: '#f472b6', border: '1px solid rgba(236,72,153,0.25)' }
+      }
+    >
+      <span aria-hidden="true">🌱</span>
+      <span className="hidden sm:inline">{language === 'es' ? 'Natur.' : 'Natures'}</span>
     </Link>
   )
 }
