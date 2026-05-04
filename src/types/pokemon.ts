@@ -68,6 +68,7 @@ export interface Pokemon {
   moves: PokemonMove[]
   sprites: PokemonSprites
   species: { name: string; url: string }
+  cries?: { latest: string | null; legacy: string | null }
 }
 
 export interface FlavorTextEntry {

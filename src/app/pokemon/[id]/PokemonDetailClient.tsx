@@ -34,6 +34,8 @@ export default function PokemonDetailClient({ params }: Props) {
   const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'abilities'>('stats')
   const [moveSearch, setMoveSearch] = useState('')
   const [selectedMove, setSelectedMove] = useState<string | null>(null)
+  const [isPlayingCry, setIsPlayingCry] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const language = usePokemonStore((s) => s.language)
   const t = T[language]
@@ -64,6 +66,25 @@ export default function PokemonDetailClient({ params }: Props) {
   const moveNames = useMoveTranslations(moveSlugsToTranslate, language)
 
   useEffect(() => { setSelectedMove(null) }, [activeTab, moveSearch])
+
+  useEffect(() => {
+    return () => { audioRef.current?.pause() }
+  }, [id])
+
+  const playCry = () => {
+    const url = pokemon?.cries?.latest
+    if (!url) return
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause()
+      setIsPlayingCry(false)
+      return
+    }
+    const audio = new Audio(url)
+    audioRef.current = audio
+    setIsPlayingCry(true)
+    audio.play()
+    audio.onended = () => setIsPlayingCry(false)
+  }
 
   const { data: moveDetail, isLoading: moveDetailLoading } = useQuery({
     queryKey: ['move', selectedMove],
@@ -216,6 +237,22 @@ export default function PokemonDetailClient({ params }: Props) {
                   />
                 </motion.div>
               </motion.div>
+
+              {pokemon.cries?.latest && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  onClick={playCry}
+                  aria-label={isPlayingCry ? 'Stop Pokémon cry' : 'Play Pokémon cry'}
+                  aria-pressed={isPlayingCry}
+                  className="absolute bottom-4 left-0 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-all"
+                  style={isPlayingCry
+                    ? { background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.5)', color: '#a5b4fc' }
+                    : { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }
+                  }
+                >
+                  {isPlayingCry ? '🔊' : '🔈'} {isPlayingCry ? t.stopCry : t.playCry}
+                </motion.button>
+              )}
 
               <motion.button
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
