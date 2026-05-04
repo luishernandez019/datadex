@@ -15,7 +15,8 @@ export default function Navbar() {
   const isDetailPage = pathname.startsWith('/pokemon/')
   const isTeamPage = pathname === '/team'
   const isNaturesPage = pathname === '/natures'
-  const isSubPage = isTeamPage || isNaturesPage
+  const isCalcPage = pathname === '/damage-calc'
+  const isSubPage = isTeamPage || isNaturesPage || isCalcPage
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const hamburgerRef = useRef<HTMLButtonElement>(null)
@@ -39,6 +40,7 @@ export default function Navbar() {
       language={language}
       isNaturesPage={isNaturesPage}
       isTeamPage={isTeamPage}
+      isCalcPage={isCalcPage}
       mobileMenuOpen={mobileMenuOpen}
       setMobileMenuOpen={setMobileMenuOpen}
       hamburgerRef={hamburgerRef}
@@ -131,6 +133,7 @@ export default function Navbar() {
             language={language}
             isNaturesPage={isNaturesPage}
             isTeamPage={isTeamPage}
+            isCalcPage={isCalcPage}
             onClose={() => {
               setMobileMenuOpen(false)
               hamburgerRef.current?.focus()
@@ -404,10 +407,31 @@ function NaturesLink({ language, isActive }: { language: string; isActive: boole
 
 // ─── Right nav: desktop inline links + mobile hamburger ─────────────────────
 
+function CalcLink({ language, isActive }: { language: string; isActive: boolean }) {
+  return (
+    <Link
+      href="/damage-calc"
+      aria-label={language === 'es' ? 'Calculadora de daño' : 'Damage Calculator'}
+      aria-current={isActive ? 'page' : undefined}
+      title={language === 'es' ? 'Calc. Daño' : 'Damage Calc'}
+      className="inline-flex items-center justify-center gap-1.5 h-9 w-9 sm:w-auto sm:px-3 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all hover:opacity-90 active:scale-95"
+      style={
+        isActive
+          ? { background: '#f97316', color: '#fff', boxShadow: '0 0 12px rgba(249,115,22,0.4)' }
+          : { background: 'rgba(249,115,22,0.12)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.25)' }
+      }
+    >
+      <span aria-hidden="true">💥</span>
+      <span className="hidden sm:inline">{language === 'es' ? 'Daño' : 'Calc'}</span>
+    </Link>
+  )
+}
+
 function RightNav({
   language,
   isNaturesPage,
   isTeamPage,
+  isCalcPage,
   mobileMenuOpen,
   setMobileMenuOpen,
   hamburgerRef,
@@ -415,6 +439,7 @@ function RightNav({
   language: string
   isNaturesPage: boolean
   isTeamPage: boolean
+  isCalcPage: boolean
   mobileMenuOpen: boolean
   setMobileMenuOpen: (open: boolean) => void
   hamburgerRef: React.RefObject<HTMLButtonElement | null>
@@ -425,6 +450,7 @@ function RightNav({
       {/* Desktop only — sm+ */}
       <div className="hidden sm:flex items-center gap-2">
         <NaturesLink language={language} isActive={isNaturesPage} />
+        <CalcLink language={language} isActive={isCalcPage} />
         <TeamLink language={language} isActive={isTeamPage} />
         <div className="flex items-center gap-1 p-1 rounded-lg"
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -484,11 +510,13 @@ function MobileMenu({
   language,
   isNaturesPage,
   isTeamPage,
+  isCalcPage,
   onClose,
 }: {
   language: string
   isNaturesPage: boolean
   isTeamPage: boolean
+  isCalcPage: boolean
   onClose: () => void
 }) {
   const isES = language === 'es'
@@ -572,6 +600,21 @@ function MobileMenu({
             <span className="text-lg" aria-hidden="true">🌱</span>
             <span className="flex-1">{isES ? 'Naturalezas' : 'Natures'}</span>
             <span className="text-[10px] uppercase tracking-widest opacity-70">25</span>
+          </Link>
+
+          <Link
+            href="/damage-calc"
+            onClick={onClose}
+            aria-current={isCalcPage ? 'page' : undefined}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+            style={
+              isCalcPage
+                ? { background: '#f97316', color: '#fff', boxShadow: '0 0 16px rgba(249,115,22,0.35)' }
+                : { background: 'rgba(249,115,22,0.1)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.25)' }
+            }
+          >
+            <span className="text-lg" aria-hidden="true">💥</span>
+            <span className="flex-1">{isES ? 'Calc. Daño' : 'Damage Calc'}</span>
           </Link>
 
           <Link
