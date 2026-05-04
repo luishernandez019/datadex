@@ -249,6 +249,34 @@ export const TYPE_NAMES_ES: Record<string, string> = {
   fairy:    'Hada',
 }
 
+export const NATURE_NAMES_ES: Record<string, string> = {
+  hardy:   'Fuerte',
+  lonely:  'Huraña',
+  brave:   'Audaz',
+  adamant: 'Firme',
+  naughty: 'Pícara',
+  bold:    'Osada',
+  docile:  'Dócil',
+  relaxed: 'Plácida',
+  impish:  'Agitada',
+  lax:     'Floja',
+  timid:   'Miedosa',
+  hasty:   'Activa',
+  serious: 'Seria',
+  jolly:   'Alegre',
+  naive:   'Ingenua',
+  modest:  'Modesta',
+  mild:    'Afable',
+  quiet:   'Mansa',
+  bashful: 'Tímida',
+  rash:    'Alocada',
+  calm:    'Serena',
+  gentle:  'Amable',
+  sassy:   'Grosera',
+  careful: 'Cauta',
+  quirky:  'Rara',
+}
+
 export const GEN_LABELS: Record<number, string> = {
   1: 'Gen I', 2: 'Gen II', 3: 'Gen III', 4: 'Gen IV',
   5: 'Gen V', 6: 'Gen VI', 7: 'Gen VII', 8: 'Gen VIII', 9: 'Gen IX',

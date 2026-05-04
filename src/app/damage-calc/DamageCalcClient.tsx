@@ -8,7 +8,9 @@ import { usePokemonList } from '@/hooks/usePokemonList'
 import { fetchMoveDetail, getSpriteUrl } from '@/lib/api'
 import { TYPE_COLORS, STAT_COLORS } from '@/types/pokemon'
 import { usePokemonStore } from '@/store/pokemonStore'
-import { T, TYPE_NAMES_ES } from '@/lib/translations'
+import { T, TYPE_NAMES_ES, NATURE_NAMES_ES } from '@/lib/translations'
+import { useMoveTranslations } from '@/hooks/useMoveTranslations'
+import type { Lang } from '@/lib/translations'
 import type { PokemonMove } from '@/types/pokemon'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -343,10 +345,11 @@ interface PokemonPanelProps {
   onPokemonSelect: (id: number) => void
   onConfigChange: (updates: Partial<PokeConfig>) => void
   t: Translations
+  language: string
 }
 
 const PokemonPanel = memo(function PokemonPanel({
-  panelId, label, accentColor, pokemonId, config, onPokemonSelect, onConfigChange, t,
+  panelId, label, accentColor, pokemonId, config, onPokemonSelect, onConfigChange, t, language,
 }: PokemonPanelProps) {
   const { data: pokemon, isLoading } = usePokemonDetail(pokemonId ?? 0)
   const totalEVs = Object.values(config.evs).reduce((a, b) => a + b, 0)
@@ -427,7 +430,9 @@ const PokemonPanel = memo(function PokemonPanel({
             style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}
           >
             {Object.keys(NATURES).map(n => (
-              <option key={n} value={n} className="capitalize">{n}</option>
+              <option key={n} value={n}>
+                {language === 'es' ? (NATURE_NAMES_ES[n] ?? n) : n.charAt(0).toUpperCase() + n.slice(1)}
+              </option>
             ))}
           </select>
         </div>
@@ -485,9 +490,10 @@ interface MoveSelectorProps {
   selectedMove: string | null
   onSelect: (name: string) => void
   t: Translations
+  language: Lang
 }
 
-const MoveSelector = memo(function MoveSelector({ moves, selectedMove, onSelect, t }: MoveSelectorProps) {
+const MoveSelector = memo(function MoveSelector({ moves, selectedMove, onSelect, t, language }: MoveSelectorProps) {
   const sorted = useMemo(() => {
     if (!moves) return []
     const isLevelUp = (m: PokemonMove) => m.version_group_details.some(d => d.move_learn_method.name === 'level-up')
@@ -504,6 +510,9 @@ const MoveSelector = memo(function MoveSelector({ moves, selectedMove, onSelect,
     return [...lvUp, ...others]
   }, [moves])
 
+  const slugs = useMemo(() => sorted.map(m => m.move.name), [sorted])
+  const moveNames = useMoveTranslations(slugs, language)
+
   if (!moves) return (
     <p className="text-slate-600 text-sm text-center py-2" aria-live="polite">{t.calcSelectAttackerFirst}</p>
   )
@@ -518,8 +527,8 @@ const MoveSelector = memo(function MoveSelector({ moves, selectedMove, onSelect,
     >
       <option value="">{t.calcSelectMove}</option>
       {sorted.map(m => (
-        <option key={m.move.name} value={m.move.name} className="capitalize">
-          {m.move.name.replace(/-/g, ' ')}
+        <option key={m.move.name} value={m.move.name}>
+          {moveNames.get(m.move.name) ?? m.move.name.replace(/-/g, ' ')}
         </option>
       ))}
     </select>
@@ -836,6 +845,7 @@ export default function DamageCalcClient() {
             onPokemonSelect={handleAttackerSelect}
             onConfigChange={handleAtkCfgChange}
             t={t}
+            language={language}
           />
           <PokemonPanel
             panelId="def"
@@ -846,6 +856,7 @@ export default function DamageCalcClient() {
             onPokemonSelect={handleDefenderSelect}
             onConfigChange={handleDefCfgChange}
             t={t}
+            language={language}
           />
         </div>
 
@@ -863,6 +874,7 @@ export default function DamageCalcClient() {
             selectedMove={selectedMove}
             onSelect={setSelectedMove}
             t={t}
+            language={language}
           />
           {moveDetail && (
             <dl className="flex flex-wrap gap-3 mt-2 text-xs">
