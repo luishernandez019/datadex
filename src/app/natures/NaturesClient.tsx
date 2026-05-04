@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { usePokemonStore } from '@/store/pokemonStore'
 import { STAT_COLORS } from '@/types/pokemon'
 
@@ -93,7 +93,7 @@ export default function NaturesClient() {
         : NATURES.filter((n) => !isNeutral(n) && n.up === filter)
 
   return (
-    <div className="min-h-screen dot-grid">
+    <main className="min-h-screen dot-grid" aria-label={isES ? 'Naturalezas Pokémon' : 'Pokémon Natures'}>
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-5"
@@ -126,6 +126,13 @@ export default function NaturesClient() {
           <SummaryCard value="20" label={isES ? 'Modificadoras' : 'Modifying'} color="#4ade80" />
           <SummaryCard value="5"  label={isES ? 'Neutrales'    : 'Neutral'}    color="#94a3b8" />
           <SummaryCard value="±10%" label={isES ? 'Modificador' : 'Modifier'}  color="#ec4899" />
+        </div>
+
+        {/* Screen-reader announcement for filter state */}
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {filter !== null
+            ? `${filtered.length} ${isES ? 'naturalezas mostradas' : 'natures shown'}`
+            : ''}
         </div>
 
         {/* Matrix */}
@@ -176,7 +183,7 @@ export default function NaturesClient() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 
@@ -215,7 +222,7 @@ function FilterChip({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className="px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wide transition-all hover:opacity-90 active:scale-95 cursor-pointer"
+      className="px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wide transition-all hover:opacity-90 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
       style={
         active
           ? { background: color, color: '#0b1120', boxShadow: `0 0 12px ${color}55` }
@@ -304,7 +311,16 @@ function NatureMatrix({
                 <button
                   onClick={() => setFilter(rowActive ? null : rowStat)}
                   aria-pressed={rowActive}
-                  className="flex items-center justify-end gap-1 px-2 rounded-lg py-2 transition-all hover:opacity-90 active:scale-95 cursor-pointer"
+                  aria-label={
+                    rowActive
+                      ? isES
+                        ? `Quitar filtro de ${STAT_LABELS_FULL[rowStat].es}`
+                        : `Remove ${STAT_LABELS_FULL[rowStat].en} filter`
+                      : isES
+                        ? `Filtrar por ${STAT_LABELS_FULL[rowStat].es}`
+                        : `Filter by ${STAT_LABELS_FULL[rowStat].en}`
+                  }
+                  className="flex items-center justify-end gap-1 px-2 rounded-lg py-2 transition-all hover:opacity-90 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                   style={{
                     background: rowActive ? `${rowColor}25` : 'rgba(74,222,128,0.05)',
                     border: rowActive
@@ -357,9 +373,20 @@ function NatureCell({
   const upColor = STAT_COLORS[nature.up] ?? '#94a3b8'
   const downColor = STAT_COLORS[nature.down] ?? '#94a3b8'
 
+  const prefersReducedMotion = useReducedMotion()
+
+  const label = neutral
+    ? language === 'es'
+      ? `${nature.es} — Neutral`
+      : `${nature.en} — Neutral`
+    : language === 'es'
+      ? `${nature.es}: +${STAT_LABELS_FULL[nature.up].es} / −${STAT_LABELS_FULL[nature.down].es}`
+      : `${nature.en}: +${STAT_LABELS_FULL[nature.up].en} / −${STAT_LABELS_FULL[nature.down].en}`
+
   return (
     <motion.div
-      whileHover={{ scale: 1.04 }}
+      whileHover={prefersReducedMotion ? {} : { scale: 1.04 }}
+      aria-label={label}
       className="flex items-center justify-center p-2 rounded-lg select-none transition-opacity"
       style={{
         background: neutral
@@ -371,15 +398,6 @@ function NatureCell({
         opacity: dim ? 0.25 : 1,
         minHeight: '52px',
       }}
-      title={
-        neutral
-          ? language === 'es'
-            ? `${nature.es} — Neutral`
-            : `${nature.en} — Neutral`
-          : language === 'es'
-            ? `${nature.es}: +${STAT_LABELS_FULL[nature.up].es} / −${STAT_LABELS_FULL[nature.down].es}`
-            : `${nature.en}: +${STAT_LABELS_FULL[nature.up].en} / −${STAT_LABELS_FULL[nature.down].en}`
-      }
     >
       <span
         className="text-[11px] sm:text-xs font-black text-center leading-tight"
@@ -398,14 +416,15 @@ function NatureCard({ nature, language }: { nature: Nature; language: 'en' | 'es
   const neutral = isNeutral(nature)
   const upColor = STAT_COLORS[nature.up] ?? '#94a3b8'
   const downColor = STAT_COLORS[nature.down] ?? '#94a3b8'
+  const prefersReducedMotion = useReducedMotion()
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      layout={!prefersReducedMotion}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2 }}
+      exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
       className="rounded-xl p-4"
       style={{
         background: neutral
